@@ -5,9 +5,11 @@ from networktables import NetworkTables
 
 
 def stream_position(to):
-    zed = ZED()
+    def nt_and_exit(message):
+        to.putString('Error', message)
+        exit(message)
+    zed = ZED(error_handler = nt_and_exit)
     zed.enable_tracking()
-
 
     translationBin = to.getSubTable('Translation')
     # rotationBin = to.getSubTable('Rotation')
@@ -47,5 +49,4 @@ def stream_position(to):
 if __name__ == "__main__":
     rioURL = '192.168.1.87'#'roborio-4256-frc.local'
     NetworkTables.initialize(server = rioURL)
-    table = NetworkTables.getTable('ZED')
-    stream_position(to = table)
+    stream_position(to = NetworkTables.getTable('ZED'))
