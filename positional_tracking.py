@@ -1,53 +1,30 @@
-########################################################################
-#
-# Copyright (c) 2017, STEREOLABS.
-#
-# All rights reserved.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-########################################################################
-
+#{ZED}
 import pyzed.camera as zcam
 import pyzed.defines as sl
 import pyzed.types as tp
 import pyzed.core as core
-
+#{RobotPy}
 from networktables import NetworkTables
 
+def exit_if_failure(zed_status):
+    if zed_status != tp.PyERROR_CODE.PySUCCESS:
+        exit(1)
+
+def default_init_params():
+    params = zcam.PyInitParameters()# creates a place to store param
+    params.camera_resolution = sl.PyRESOLUTION.PyRESOLUTION_HD720# HD720, 60 fps
+    params.coordinate_system = sl.PyCOORDINATE_SYSTEM.PyCOORDINATE_SYSTEM_RIGHT_HANDED_Z_UP
+    params.coordinate_units = sl.PyUNIT.PyUNIT_METER
+    return params
 
 def main():
-    # Create a PyZEDCamera object
     zed = zcam.PyZEDCamera()
+    init_params = default_init_params()
+    exit_if_failure(zed.open(init_params))# opens camera and checks for errors at the same time
 
-    # Create a PyInitParameters object and set configuration parameters
-    init_params = zcam.PyInitParameters()
-    init_params.camera_resolution = sl.PyRESOLUTION.PyRESOLUTION_HD720  # Use HD720 video mode (default fps: 60)
-    # Use a right-handed Z-up coordinate system
-    init_params.coordinate_system = sl.PyCOORDINATE_SYSTEM.PyCOORDINATE_SYSTEM_RIGHT_HANDED_Z_UP
-    init_params.coordinate_units = sl.PyUNIT.PyUNIT_METER  # Set units in meters
-
-    # Open the camera
-    err = zed.open(init_params)
-    if err != tp.PyERROR_CODE.PySUCCESS:
-        exit(1)
-
-    # Enable positional tracking with default parameters
-    py_transform = core.PyTransform()  # First create a PyTransform object for PyTrackingParameters object
-    tracking_parameters = zcam.PyTrackingParameters(init_pos=py_transform)
-    err = zed.enable_tracking(tracking_parameters)
-    if err != tp.PyERROR_CODE.PySUCCESS:
-        exit(1)
+    transform = core.PyTransform()
+    tracking_params = zcam.PyTrackingParameters(init_pos = transform)
+    exit_if_failure(zed.enable_tracking(tracking_params))# enables tracking and checks for errors at the same time
 
     # Track the camera position during 1000 frames
     i = 0
