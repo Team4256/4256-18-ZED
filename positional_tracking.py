@@ -17,7 +17,7 @@ def default_init_params():
     params.coordinate_units = sl.PyUNIT.PyUNIT_METER
     return params
 
-def main():
+def stream_position():
     zed = zcam.PyZEDCamera()
     init_params = default_init_params()
     exit_if_failure(zed.open(init_params))# opens camera and checks for errors at the same time
@@ -55,4 +55,8 @@ def main():
     zed.close()
 
 if __name__ == "__main__":
-    main()
+    rioURL = '192.168.1.87'#'roborio-4256-frc.local'
+    NetworkTables.initialize(server = rioURL)
+    portal = NetworkTables.getTable('ZED')
+    portal.putBoolean("test", True)
+    stream_position()
