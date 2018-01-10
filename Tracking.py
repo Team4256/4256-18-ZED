@@ -26,6 +26,7 @@ def stream_position(to):
 
         except:
             zed.camera.close()
+            to.deleteAllEntries()
             break
 
 if __name__ == '__main__':
