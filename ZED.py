@@ -48,7 +48,7 @@ class ZED(object):
     def grab(self):
         self.overall_status = self.camera.grab(zcam.PyRuntimeParameters())
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
-            self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD)# locates left camera eye with respect to world
+            print(self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD))# locates left camera eye with respect to world
 
     def position(self):
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
