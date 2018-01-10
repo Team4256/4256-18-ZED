@@ -64,7 +64,7 @@ class ZED(object):
 
     @property# this denotes a "getter," meaning the function below generates the value of self.overall_status
     def overall_status(self):
-        return sl.PyERROR_CODE.errorCode2str(self._overall_status)
+        return sl.errorCode2str(self._overall_status)
 
     @overall_status.setter# this denotes a "setter," meaning the function below assigns a new value to self.overall_status
     def overall_status(self, update):
@@ -72,7 +72,7 @@ class ZED(object):
 
     @property
     def tracking_status(self):
-        return sl.PyTRACKING_STATE.trackingState2str(self._tracking_status)
+        return sl.trackingState2str(self._tracking_status)
 
     @tracking_status.setter
     def tracking_status(self, update):
