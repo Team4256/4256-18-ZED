@@ -36,19 +36,19 @@ def default_init_params():
 class ZED(object):
     def __init__(self):
         self.camera = zcam.PyZEDCamera()
+        #self.pose = None# just declaring for later use
         self.overall_status = self.camera.open(default_init_params())# opens camera and updates overall_status at the same time
-        self.pose = None# just declaring for later use
+        self.tracking_status = "Disabled"
 
     def enable_tracking(self):
-        transform = core.PyTransform()
-        params = zcam.PyTrackingParameters(init_pos = transform)
+        params = zcam.PyTrackingParameters(init_pos = core.PyTransform())
         self.overall_status = self.camera.enable_tracking(params)# enables tracking and updates overall_status at the same time
         self.pose = zcam.PyPose()
 
     def grab(self):
         self.overall_status = self.camera.grab(zcam.PyRuntimeParameters())
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
-            print(self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD))# locates left camera eye with respect to world
+            self.tracking_status = self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD)# locates left camera eye with respect to world
 
     def position(self):
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
@@ -69,3 +69,11 @@ class ZED(object):
     @overall_status.setter# this denotes a "setter," meaning the function below assigns a new value to self.overall_status
     def overall_status(self, update):
         self._overall_status = update
+
+    @property
+    def tracking_status(self):
+        return sl.trackingState2str(self._tracking_status)
+
+    @tracking_status.setter
+    def tracking_status(self, update):
+        self._tracking_status = update

@@ -19,7 +19,11 @@ def stream_position(to):
                 positionBin.putNumber('Y', round(new_position[1], 3))
                 positionBin.putNumber('Z', round(new_position[2], 3))
 
-                # to.putNumber('Timestamp', zed_pose.timestamp/1e13)
+                positionBin.putNumber('Timestamp', zed.pose.timestamp/1e13)
+                positionBin.putString('Tracking Status', zed.tracking_status)
+
+            to.putString('Overall Status', zed.overall_status)
+
         except:
             zed.camera.close()
             break
