@@ -22,14 +22,17 @@ def stream_position(to):
                 positionBin.putNumber('Timestamp', zed.pose.timestamp/1e13)
                 positionBin.putString('Tracking Status', zed.tracking_status)
 
+                NetworkTables.flush()
+
             to.putString('Overall Status', zed.overall_status)
 
         except:
             zed.camera.close()
-            to.deleteAllEntries()
             break
 
 if __name__ == '__main__':
     rioURL = '192.168.0.195'#'roborio-4256-frc.local'
     NetworkTables.initialize(server = rioURL)
+    #NetworkTables.startClientTeam(4256)
     stream_position(to = NetworkTables.getTable('ZED'))
+    NetworkTables.stopClient()
