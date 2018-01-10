@@ -36,7 +36,7 @@ def default_init_params():
 class ZED(object):
     def __init__(self):
         self.camera = zcam.PyZEDCamera()
-        #self.pose = None# just declaring for later use
+        self.pose = None# just declaring for later use
         self.overall_status = self.camera.open(default_init_params())# opens camera and updates overall_status at the same time
         self.tracking_status = "Disabled"
 
