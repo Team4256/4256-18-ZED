@@ -17,7 +17,12 @@ PyERROR_CODE_CAMERA_NOT_INITIALIZED : specific to grab(), fix by calling open()
 PyERROR_CODE_NVIDIA_DRIVER_OUT_OF_DATE
 PyERROR_CODE_INVALID_FUNCTION_CALL : usually fix by calling open()
 PyERROR_CODE_CORRUPTED_SDK_INSTALLATION
-PyERROR_CODE_LAST
+"""
+"""
+PyTRACKING_STATE_SEARCHING
+PyTRACKING_STATE_OK
+PyTRACKING_STATE_OFF
+PyTRACKING_STATE_FPS_TOO_LOW
 """
 #{ZED}
 import pyzed.camera as zcam
@@ -163,4 +168,3 @@ class ZED(object):
     @cloud_status.setter
     def cloud_status(self, update):
         self._cloud_status = update
-
