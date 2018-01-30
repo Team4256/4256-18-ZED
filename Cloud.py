@@ -1,10 +1,13 @@
+"""https://github.com/VincentCheungM/lidar_projection/blob/master/show.py"""
+import numpy as np
+
 def scale_to_255(array, minimum, maximum):
     return (255*(array - minimum)/float(maximum - minimum)).astype(array.dtype)
 
 def birds_eye_projection(cloud, x_range = (-10, 10), y_range = (-10, 10), z_range = (-3, 3), res = 0.1):
     rows, columns = cloud.shape[:2]
     cloud = cloud.reshape((rows*columns, -1))
-    cloudX, cloudY, cloudZ = np.split(flat_xyz, 3, axis = 1)# 4 to get color too
+    cloudX, cloudY, cloudZ, color = np.split(cloud, 4, axis = 1)# 4 to get color too
 
     ff = np.logical_and((cloudY > y_range[0]), (cloudY < y_range[1]))
     ss = np.logical_and((cloudX > x_range[0]), (cloudX < x_range[1]))
@@ -27,3 +30,6 @@ def birds_eye_projection(cloud, x_range = (-10, 10), y_range = (-10, 10), z_rang
     img = np.zeros((y_max, x_max), dtype = 'uint8')
     img[-imgY, imgX] = pixel_values
     return img
+
+cloud = np.load("cloud.npy")
+print(birds_eye_projection(cloud))
