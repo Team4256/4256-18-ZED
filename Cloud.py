@@ -41,7 +41,7 @@ def birds_eye_projection(cloud, x_range = (-100, 100), y_range = (-100, 100), z_
 
 
 
-def get_top_from_front(depth_map, section_count = 127):
+def get_top_from_front(depth_map, section_count = 10):
     section_size = depth_map.ptp()/section_count# max - min
     rows, columns = depth_map.shape[:2]
     sections = np.zeros((rows, columns, section_count), dtype = 'uint32')

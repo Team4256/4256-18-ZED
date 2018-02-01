@@ -1,16 +1,18 @@
 #{ZED}
 from ZED import ZED
+import Cloud
 #{RobotPy}
 from networktables import NetworkTables
 #{OpenCV}
 import cv2
+import numpy as np# TODO shouldn't need to import this here
 
 
 def stream_position(to):
     zed = ZED()
     zed.enable_tracking()
-    zed.enable_video()
-    zed.enable_cloud()
+    zed.enable_rgb()
+    zed.enable_depth()
 
     positionBin = to.getSubTable('Position')
 
@@ -26,12 +28,18 @@ def stream_position(to):
                 #positionBin.putNumber('Timestamp', zed.pose.timestamp/1e13)
                 positionBin.putString('Tracking Status', zed.tracking_status)
 
-            new_image = zed.numpy_image()
-            if new_image is not None:
-                cv2.imshow('Live', new_image)
+            new_rgb = cv2.pyrDown(zed.numpy_rgb())
+            if new_rgb is not None:
+                cv2.imshow('Live', new_rgb)
                 cv2.waitKey(5)
 
-            new_cloud = zed.numpy_cloud()
+            new_depth = cv2.pyrDown(zed.numpy_depth())
+            if new_depth is not None:
+                new_depth[~np.isfinite(new_depth)] = 0
+                new_depth *= 255/new_depth.max()
+                top = Cloud.get_top_from_front(new_depth)
+                cv2.imshow('Depth', new_depth.astype('uint8')[:,:,None])
+                cv2.imshow('Bird', top.astype('uint8'))
 
             to.putString('Overall Status', zed.overall_status)
 

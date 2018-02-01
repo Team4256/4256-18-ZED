@@ -33,7 +33,7 @@ import pyzed.core as core
 from numpy import ctypeslib
 
 def default_init_params():
-    params = zcam.PyInitParameters()# creates a place to store param
+    params = zcam.PyInitParameters()# creates a place to store params
     params.camera_resolution = sl.PyRESOLUTION.PyRESOLUTION_HD720
     params.camera_fps = 60
     # options are HD2K (15fps), HD1080 (max 30fps), HD720 (max 60fps), WVGA (max 100fps)
@@ -60,8 +60,8 @@ class ZED(object):
         self.overall_status = self.camera.open(default_init_params())
         # opens camera and updates overall_status at the same time
         self.tracking_status = 'Disabled'
-        self.video_status = 'Disabled'
-        self.cloud_status = 'Disabled'
+        self.rgb_status = 'Disabled'
+        self.depth_status = 'Disabled'
 
     """load_area should be False or a file path string"""
     def enable_tracking(self, load_area = False):
@@ -81,32 +81,33 @@ class ZED(object):
             self.camera.disable_tracking()
         self.tracking_status = 'Disabled'
 
-    def enable_video(self):
-        self.image = core.PyMat()
-        self.video_status = 'Enabled'
+    def enable_rgb(self):
+        self.rgb = core.PyMat()
+        self.rgb_status = 'Enabled'
 
-    def disable_video(self):
-        self.video_status = 'Disabled'
+    def disable_rgb(self):
+        self.rgb_status = 'Disabled'
 
-    def enable_cloud(self):
-        self.cloud = core.PyMat()
-        self.cloud_status = 'Enabled'
+    def enable_depth(self):
+        self.depth = core.PyMat()
+        self.depth_status = 'Enabled'
 
-    def disable_cloud(self):
-        self.cloud_status = 'Disabled'
+    def disable_depth(self):
+        self.depth_status = 'Disabled'
 
     def grab(self):
-        self.overall_status = self.camera.grab(zcam.PyRuntimeParameters())
+        self.overall_status = self.camera.grab(zcam.PyRuntimeParameters(sensing_mode = sl.PySENSING_MODE.PySENSING_MODE_STANDARD))
+        # options are STANDARD, FILL
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
             if self.tracking_status is not 'Disabled':
                 self.tracking_status = self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD)
                 # locates left camera with respect to world
-            if self.video_status is not 'Disabled':
-                self.video_status = self.camera.retrieve_image(self.image, sl.PyVIEW.PyVIEW_LEFT)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
+            if self.rgb_status is not 'Disabled':
+                self.rgb_status = self.camera.retrieve_image(self.rgb, sl.PyVIEW.PyVIEW_LEFT)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
                 # GPU mode doesn't work, width and height of 0 means default
                 # from left camera
-            if self.cloud_status is not 'Disabled':
-                self.cloud_status = self.camera.retrieve_measure(self.cloud, sl.PyMEASURE.PyMEASURE_XYZBGRA)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
+            if self.depth_status is not 'Disabled':
+                self.depth_status = self.camera.retrieve_measure(self.depth, sl.PyMEASURE.PyMEASURE_DEPTH)#XYZBGRA)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
                 # GPU mode doesn't work, width and height of 0 means default
                 # from left camera
 
@@ -122,15 +123,15 @@ class ZED(object):
         else:
             return None
 
-    def numpy_image(self):
-        if self._video_status == tp.PyERROR_CODE.PySUCCESS:
-            return self.image.get_data()
+    def numpy_rgb(self):
+        if self._rgb_status == tp.PyERROR_CODE.PySUCCESS:
+            return self.rgb.get_data()
         else:
             return None
 
-    def numpy_cloud(self):
-        if self._cloud_status == tp.PyERROR_CODE.PySUCCESS:
-            return self.cloud.get_data()
+    def numpy_depth(self):
+        if self._depth_status == tp.PyERROR_CODE.PySUCCESS:
+            return self.depth.get_data()
         else:
             return None
 
@@ -154,17 +155,17 @@ class ZED(object):
         self._tracking_status = update
 
     @property
-    def video_status(self):
-        return str(self._video_status)
+    def rgb_status(self):
+        return str(self._rgb_status)
 
-    @video_status.setter
-    def video_status(self, update):
-        self._video_status = update
+    @rgb_status.setter
+    def rgb_status(self, update):
+        self._rgb_status = update
 
     @property
-    def cloud_status(self):
-        return str(self._cloud_status)
+    def depth_status(self):
+        return str(self._depth_status)
 
-    @cloud_status.setter
-    def cloud_status(self, update):
-        self._cloud_status = update
+    @depth_status.setter
+    def depth_status(self, update):
+        self._depth_status = update
