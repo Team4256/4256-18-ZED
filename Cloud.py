@@ -47,7 +47,7 @@ def get_top_from_front(depth_map, section_count = 10):
     sections = np.zeros((rows, columns, section_count), dtype = 'uint32')
     for i in range(section_count):
         indices = np.logical_and((depth_map >= i*section_size), (depth_map < (i+1)*section_size))
-        sections[indices, i] = 1#depth_map[indices]
+        sections[indices, i] = 1
     y_mult = np.arange(0, rows, dtype = 'uint32')[:, None, None]
     sections *= y_mult
     return sections.mean(axis = 0).transpose()
@@ -57,19 +57,24 @@ if __name__ == '__main__':
     '''This is meant to be used for debugging purposes; works with any depth map image.'''
     import cv2
     import time
-    depth_map = cv2.imread('sample depth map.jpg', 0)# get grayscale depth map
-    result_width = depth_map.shape[1]
-    result_height = 200
-    hsv = np.full((result_height, result_width, 3), 255, dtype = 'uint8')# prepare empty array for colored result
-
+    #{Prepare depth map from file}
+    depth_map = np.load('sample depth map.npy')# get grayscale depth map
+    depth_map[~np.isfinite(depth_map)] = 0# remove bad values like inf
+    depth_map = cv2.pyrDown(depth_map)# shrink to speed up computations
+    depth_map = depth_map.max() - depth_map
+    #{Do the conversion}
     start_time = time.time()
     top_view = get_top_from_front(depth_map)
     conversion_time = time.time() - start_time
     print('The conversion took {} seconds'.format(conversion_time))
-
+    #{Prepare vars for resizing}
+    result_width = depth_map.shape[1]
+    result_height = 200
+    hsv = np.full((result_height, result_width, 3), 255, dtype = 'uint8')# prepare empty array for colored result
+    #{Display}
     top_view *= 255/top_view.max()# scales to make new max() 255
     result = cv2.resize(top_view.astype('uint8'), (result_width, result_height), interpolation = cv2.INTER_LINEAR)# stretch the height
     hsv[:,:,0] = result
-    cv2.imshow('Depth Map', depth_map)
+    cv2.imshow('Depth Map', (depth_map*255/depth_map.max()).astype('uint8'))
     cv2.imshow('Top View', cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR))
     cv2.waitKey(0)
