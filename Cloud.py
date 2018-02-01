@@ -56,11 +56,17 @@ def get_top_from_front(depth_map, section_count = 127):
 if __name__ == '__main__':
     '''This is meant to be used for debugging purposes; works with any depth map image.'''
     import cv2
-    depth_map = cv2.imread('depth.jpg', 0)# get grayscale depth map
+    import time
+    depth_map = cv2.imread('sample depth map.jpg', 0)# get grayscale depth map
     result_width = depth_map.shape[1]
     result_height = 200
     hsv = np.full((result_height, result_width, 3), 255, dtype = 'uint8')# prepare empty array for colored result
+
+    start_time = time.time()
     top_view = get_top_from_front(depth_map)
+    conversion_time = time.time() - start_time
+    print('The conversion took {} seconds'.format(conversion_time))
+
     top_view *= 255/top_view.max()# scales to make new max() 255
     result = cv2.resize(top_view.astype('uint8'), (result_width, result_height), interpolation = cv2.INTER_LINEAR)# stretch the height
     hsv[:,:,0] = result
