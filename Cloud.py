@@ -1,43 +1,57 @@
-'''https://github.com/VincentCheungM/lidar_projection/blob/master/show.py'''
-import numpy as np
-
 def scale_to_255(array, minimum, maximum):
     return (255*(array - minimum)/float(maximum - minimum)).astype(array.dtype)
 
-def birds_eye_projection(cloud, x_range = (-100, 100), y_range = (-100, 100), z_range = (-100, 100), res = 1.0):
-    rows, columns = cloud.shape[:2]
-    cloud = cloud.reshape((rows*columns, -1))#.astype('int32')
-    cloudX, cloudY, cloudZ, color = np.split(cloud, 4, axis = 1)# 4 to get color too
+from math import acos
+from math import radians as to_rads
+def lowest_angle_for(depth, camera_properties, radians = False):# depth and height must be in same units
+    '''Imagine that the camera lies at the center of a circle with radius depth.
+    That circle intersects the ground at some point, P. This function returns the
+    angle between the lower boundary of the camera's vertical_fov and point P.'''
+    big_angle = acos(camera_properties.height/float(depth))
+    lowest_angle = to_degrees(big_angle) - camera_properties.get_lens_to_ground_angle() + camera_properties.get_vertical_fov()/2.0
+    return to_rads(lowest_angle) if radians else lowest_angle
 
-    ff = np.logical_and((cloudY > y_range[0]), (cloudY < y_range[1]))
-    ss = np.logical_and((cloudX > x_range[0]), (cloudX < x_range[1]))
 
-    indices = np.argwhere(np.logical_and(ff, ss)).flatten()
+from math import radians as to_rads
+class CameraProperties(object):
+    def __init__(self, height, lens_to_ground_angle = 90.0, vertical_fov = 70.0):
+        self.height = float(height)
+        self.lens_to_ground_angle = float(lens_to_ground_angle)
+        self.vertical_fov = float(vertical_fov)
+    def get_lens_to_ground_angle(self, radians = False):
+        return to_rads(self.lens_to_ground_angle) if radians else self.lens_to_ground_angle
+    def get_vertical_fov(self, radians = False):
+        return to_rads(self.vertical_fov) if radians else self.vertical_fov
 
-    imgX = (cloudX[indices]/res)#.astype('int32')
-    imgY = (cloudY[indices]/res)#.astype('int32')
-
-    imgX = imgX[np.isfinite(imgX)]# remove nan and infinities
-    imgY = imgY[np.isfinite(imgY)]
-    #x = x[numpy.logical_not(numpy.isnan(x))]
-    #x = x[~numpy.isnan(x)]
-
-    imgX -= int(np.floor(x_range[0]/res))
-    imgY -= int(np.floor(y_range[0]/res))
-
-    validZ = cloudZ[indices]
-    validZ = validZ[np.isfinite(validZ)]
-
-    pixel_values = np.clip(validZ, z_range[0], z_range[1])
-    pixel_values = scale_to_255(pixel_values, z_range[0], z_range[1])
-
-    x_max = int((x_range[1] - x_range[0])/res)
-    y_max = int((y_range[1] - y_range[0])/res)
-
-    img = np.zeros((y_max, x_max), dtype = 'uint8')
-
-    img[-imgY.astype('int32'), imgX.astype('int32')] = pixel_values
-    return img
+import numpy as np
+from math import ceil
+class DepthMap(object):
+    def __init__(self, depth_map):
+        self.depth_map = depth_map
+        self.height, self.width = depth_map.shape[:2]
+        self.min, self.max = depth_map.min(), depth_map.max()
+    def bird_view(resolution = 10):
+        section_size = (self.max - self.min)/float(resolution)# don't use .ptp(), already have .max and .min
+        sections = np.zeros((self.height, self.width, resolution), dtype = 'uint32')
+        for i in range(resolution):
+            indices = np.logical_and((self.depth_map >= i*section_size), (self.depth_map < (i+1)*section_size))
+            sections[indices, i] = 1
+        return sections.sum(axis = 0).transpose()
+    def bird_view_y_aware(resolution = 10, camera_properties):
+        section_size = (self.max - self.min)/float(resolution)# could use .ptp() instead of .max() - .min()
+        sections = np.zeros((self.height, self.width, resolution), dtype = 'uint32')
+        for i in range(resolution):
+            indices = np.logical_and((depth_map >= i*section_size), (depth_map < (i+1)*section_size))
+            sections[indices, i] = 1
+            # avg_depth = self.depth_map[indices].mean()# don't do this for time's sake
+            avg_depth = (i+.5)*section_size
+            minimum_height = self.height*(lowest_angle_for(avg_depth, camera_properties)/camera_properties.get_vertical_fov())# basically (max height)*(% of the way up)
+            minimum_height = ceil(minimum_height)
+            y_mult_A = np.zeros((minimum_height), dtype = 'uint8')
+            y_mult_B = np.arange(minimum_height, self.height, dtype = 'uint8')
+            y_mult = np.concatenate(y_mult_A, y_mult_B)
+            sections[:,:,i] *= y_mult[:, None]
+        return sections.mean(axis = 0).transpose()#TODO mean will count all the 0's, resulting in dimmer result
 
 
 
