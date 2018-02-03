@@ -27,8 +27,8 @@ class ThreadableGrabber(object):
             frame = self.film.read()
             if frame[0]:
                 highlighted = highlight_cubes(frame[1])
-                undistorted = Undistort.simple(self.K, self.D, highlighted)
-                self.destination_queue.put(undistorted)
+                #undistorted = Undistort.simple(self.K, self.D, highlighted)
+                self.destination_queue.put(highlighted)#undistorted)
 
         self._release()
 

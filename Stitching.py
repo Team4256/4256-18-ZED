@@ -49,9 +49,7 @@ class ThreadableStitcher(object):
         import time
 
         if view_left[0]:
-            start_time = time.time()
             bird_left = Transform2D.getBirdView(view_left[1], Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
-            print(time.time() - start_time)
             final_left = rotate(bird_left, self.Ltheta)#TODO scale parameter
             total_height = max(total_height, final_left.shape[0] + self.Ly_Offset)
             total_width += final_left.shape[1]
