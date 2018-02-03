@@ -21,8 +21,8 @@ class ThreadableOdometrySender(object):
                     except Empty:
                         break
 
-            self.table_position.putNumber('X', -round(new_position[0], 4))
-            self.table_position.putNumber('Y', -round(new_position[1], 4))
+            self.table_position.putNumber('Y', round(new_position[0], 4))
+            self.table_position.putNumber('X', -round(new_position[1], 4))
             self.table_position.putNumber('Z', round(new_position[2], 4))
             self.table_position.putNumber('Confidence', new_position[3])
             self.table_position.putNumber('Timestamp', new_position[4])
