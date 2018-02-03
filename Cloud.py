@@ -58,7 +58,7 @@ class DepthMap(object):
         section_size = (self.max - self.min)/float(resolution)# could use .ptp() instead of .max() - .min()
         sections = np.zeros((self.height, self.width, resolution), dtype = 'uint32')
         for i in range(resolution):
-            indices = np.logical_and((self.depth_map >= i*section_size), (self.depth_map < (i + 1)*section_size))
+            indices = np.logical_and((self.depth_map >= self.min + i*section_size), (self.depth_map < self.min + (i + 1)*section_size))
             sections[indices, i] = 1
         return sections.sum(axis = 0).transpose()
 
@@ -86,8 +86,10 @@ if __name__ == '__main__':
     smart_depth_map = DepthMap(depth_map)
     smart_depth_map.enable_bird(20, CameraProperties(2.0))
     #{Do the conversion}
+
     start_time = time.time()
-    top_view = smart_depth_map.bird_height_aware()#top_view = smart_depth_map.bird_independent(10)
+    top_view = smart_depth_map.bird_independent(20)
+    #top_view = smart_depth_map.bird_height_aware()
     conversion_time = time.time() - start_time
     print('The conversion took {} seconds'.format(conversion_time))
     #{Remove nans and rescale}
