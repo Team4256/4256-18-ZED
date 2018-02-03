@@ -23,8 +23,8 @@ def rotate(image, angle, scale = 1.0):
 class ThreadableStitcher(object):
     def __init__(
         self, cameraL, cameraR, destination_queue,
-        LR_PinchAmount = 600//4, Ly_Offset = 48//4, Ry_Offset = 0//4,
-        Ltheta = -60, Rtheta = 56):
+        LR_PinchAmount = 0//4, Ly_Offset = 0//4, Ry_Offset = 0//4,
+        Ltheta = -0, Rtheta = 0):
         #{defining other constants}
         self.LR_PinchAmount = LR_PinchAmount
         self.Ly_Offset = Ly_Offset
@@ -42,10 +42,10 @@ class ThreadableStitcher(object):
         self.enabled = False
 
     def get_ready(self, view_left, view_right, view_zed):
-        bird_left = Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
+        bird_left = view_left#Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
         final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
 
-        bird_right = Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
+        bird_right = view_right#Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
         final_right = rotate(bird_right, self.Rtheta)
 
         self.total_height = max(final_left.shape[0] + self.Ly_Offset, final_right.shape[0] + self.Ry_Offset)
@@ -56,10 +56,10 @@ class ThreadableStitcher(object):
 
     def create_canvas(self, view_left, view_right, view_zed):
         '''get new frame'''
-        bird_left = Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
+        bird_left = view_left#Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
         final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
 
-        bird_right = Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
+        bird_right = view_right#Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
         final_right = rotate(bird_right, self.Rtheta)
 
         self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left

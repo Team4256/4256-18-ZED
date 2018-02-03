@@ -71,7 +71,7 @@ class ZED(object):
         self.overall_status = self.camera.enable_tracking(params)
         # enables tracking and updates overall_status at the same time
         translation = core.PyTranslation()
-        translation.init_vector(-0.68, 0.0, 0.0)
+        translation.init_vector(-0.885, 0.0, 0.0)
         transform = core.PyTransform()
         transform.set_translation(translation)
 
