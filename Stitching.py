@@ -38,7 +38,7 @@ class ThreadableStitcher(Threadable):
             self.canvas_queue.put(self.canvas)
             #-------------------------------------------------------------------
             thresholded = np.zeros_like(view_left[1])
-            thresholded[view_left[1] <= 50] = 255#TODO tune
+            thresholded[view_left[1] <= 60] = 255#TODO tune
             _, contours, _ = cv2.findContours(thresholded, mode = cv2.RETR_LIST, method = cv2.CHAIN_APPROX_SIMPLE)
             cubeL = thresholded.shape[1]
             cubeR = 0.0
