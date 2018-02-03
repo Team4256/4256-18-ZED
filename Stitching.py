@@ -23,7 +23,7 @@ def rotate(image, angle, scale = 1.0):
 class ThreadableStitcher(object):
     def __init__(
         self, cameraL, cameraR, destination_queue,
-        LR_PinchAmount = 600//4, Ly_Offset = 40//4, Ry_Offset = 0,
+        LR_PinchAmount = 600//4, Ly_Offset = 48//4, Ry_Offset = 0//4,
         Ltheta = -60, Rtheta = 56):
         #{defining other constants}
         self.LR_PinchAmount = LR_PinchAmount

@@ -5,7 +5,7 @@ import Transform2D
 
 def highlight_cubes(image):
     image = np.rot90(image, 2)
-    return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:,:,2]
+    return cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)[:,:,2]
 
 class USB(object):
     def __init__(self, port, calibration_path):
