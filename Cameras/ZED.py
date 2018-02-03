@@ -197,7 +197,7 @@ class ThreadableGrabber(object):
             if new_position is not None:
                 new_position = new_position.tolist()
                 new_position.append(self.zed.pose.pose_confidence)
-                new_position.append(self.zed.pose.timestamp/1e13)
+                new_position.append(self.zed.pose.timestamp/1e6)
                 new_position.append(self.zed.tracking_status)
 
                 self.odometry_queue.put(new_position)

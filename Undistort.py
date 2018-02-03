@@ -32,7 +32,7 @@ def load_calib(at_path, image_size_ratio = 1.0):
         K[2][2] = 1.0
         D = np.load(at_path + 'D.npy')*image_size_ratio
         return K, D
-    except IOError:
+    except FileNotFoundError:
         K, D = create_calib(at_path)
         K *= image_size_ratio
         K[2][2] = 1.0
@@ -81,7 +81,7 @@ def create_calib(from_path):
         cv2.fisheye.calibrate(
             objpoints,
             imgpoints,
-            gray.shape[::-1],
+            image.shape[::-1],
             K,
             D,
             rvecs,

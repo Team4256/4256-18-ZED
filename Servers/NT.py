@@ -1,4 +1,5 @@
 from networktables import NetworkTables
+from queue import Empty
 
 class ThreadableOdometrySender(object):
     def __init__(self, table, odometry_queue):
