@@ -24,7 +24,7 @@ def rotate(image, angle, scale = 1.0):
 class ThreadableStitcher(object):
     def __init__(
         self, Lqueue, Rqueue, ZEDqueue, destination_queue,
-        LR_PinchAmount = 495, Ly_Offset = 0, Ry_Offset = 10,
+        LR_PinchAmount = 0, Ly_Offset = 0, Ry_Offset = 10,
         Ltheta = -58, Rtheta = 60):
         #{defining other constants}
         self.LR_PinchAmount = LR_PinchAmount
@@ -54,8 +54,8 @@ class ThreadableStitcher(object):
             total_width += final_left.shape[1]
 
             ##############
- #           if self.canvas is not None:
- #               self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
+            if self.canvas is not None:
+                self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
 
         if view_right[0]:
             bird_right = Transform2D.getBirdView(view_right[1], Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
@@ -64,11 +64,11 @@ class ThreadableStitcher(object):
             total_width += final_right.shape[1]
 
             ##############
-#            if self.canvas is not None:
-#                self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:] = final_right
+            if self.canvas is not None:
+                self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:] = final_right
 
         if self.canvas is None:
-            self.canvas = np.zeros((total_height, total_width, 3), dtype = 'uint8')
+            self.canvas = np.zeros((total_height, total_width), dtype = 'uint8')
 
         return self.canvas
 

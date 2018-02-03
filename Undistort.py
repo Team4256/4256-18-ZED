@@ -96,7 +96,7 @@ def create_calib(from_path):
     print('K: {}'.format(K))
     print('D: {}'.format(D))
 
-    np.save('K', K)
-    np.save('D', D)
+    np.save(from_path + 'K', K)
+    np.save(from_path + 'D', D)
 
     return K, D

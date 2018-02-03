@@ -27,8 +27,7 @@ class ImageHandler(BaseHTTPRequestHandler):
                             break
 
 
-                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image_jpg = convertToJPG.fromarray(image_rgb)
+                image_jpg = convertToJPG.fromarray(image)
                 tempFile = BytesIO()
                 image_jpg.save(tempFile, "JPEG")
                 self.wfile.write("--jpgboundary".encode())
