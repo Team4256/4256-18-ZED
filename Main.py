@@ -7,7 +7,6 @@ if __name__ == '__main__':
     NetworkTables.setNetworkIdentity('TX2')
     NetworkTables.setUpdateRate(.020)
     table = NetworkTables.getTable('ZED')
-    robot_data = NetworkTables.getTable('Faraday')
 
     portL, portR = (1, 2)
 
@@ -46,11 +45,7 @@ if __name__ == '__main__':
     while True:
         try:
             #{stopping ZED when it is no longer needed}
-            if robot_data.getBoolean('Enable Odometry', True):
-                if not zed_running:
-                    thread_cameraZED.start()
-                    zed_running = True
-            else:
+            if not table.getBoolean('Enable Odometry', True):
                 if zed_running:
                     thread_cameraZED.stop()
                     thread_cameraZED.join()
