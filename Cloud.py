@@ -1,6 +1,3 @@
-def scale_to_255(array, minimum, maximum):
-    return (255*(array - minimum)/float(maximum - minimum)).astype(array.dtype)
-
 from math import acos
 from math import radians as to_rads
 from math import degrees as to_degrees
@@ -37,7 +34,7 @@ class DepthMap(object):
         self.depth_map[self.depth_map == np.NINF] = np.nan
         self.height, self.width = depth_map.shape[:2]
         self.min, self.max = np.nanmin(self.depth_map), np.nanmax(self.depth_map)
-        self.depth_map[np.isnan(depth_map)] = 0
+        self.depth_map[np.isnan(self.depth_map)] = 0
 
     def enable_bird(self, resolution, camera_properties, save_config = False, load_config = False):
         if load_config:
@@ -73,8 +70,9 @@ class DepthMap(object):
             indices = np.logical_and((self.depth_map >= self.min + i*section_size), (self.depth_map < self.min + (i + 1)*section_size))
             sections[indices, i] = 1
         sections *= self.config['height_to_color']
-        sections[sections == 0] = np.nan
-        return np.nanmean(sections, axis = 0).transpose()#sections.mean(axis = 0).transpose()#
+        sections = np.ma.masked_array(sections, sections == 0)
+        result = np.mean(sections, axis = 0).transpose()
+        return result.filled(0)
 
 
 if __name__ == '__main__':
@@ -83,10 +81,10 @@ if __name__ == '__main__':
     import time
     #{Prepare depth map from file}
     depth_map = np.load('sample depth map.npy')# get grayscale depth map
-    depth_map = cv2.pyrDown(depth_map)# shrink to speed up computations
+    depth_map = cv2.pyrDown(cv2.pyrDown(depth_map))# shrink to speed up computations
     #{Prepare for conversion}
     smart_depth_map = DepthMap(depth_map)
-    smart_depth_map.enable_bird(127, CameraProperties(2.0))
+    smart_depth_map.enable_bird(20, CameraProperties(2.0))
     #{Do the conversion}
     start_time = time.time()
     top_view = smart_depth_map.bird_height_aware()#top_view = smart_depth_map.bird_independent(10)
@@ -102,10 +100,8 @@ if __name__ == '__main__':
     #{Prepare vars for resizing}
     result_width = depth_map.shape[1]
     result_height = 200
-    hsv = np.full((result_height, result_width, 3), 255, dtype = 'uint8')# prepare empty array for colored result
     #{Display}
     result = cv2.resize(top_view.astype('uint8'), (result_width, result_height), interpolation = cv2.INTER_LINEAR)# stretch the height
-    hsv[:,:,0] = result
     cv2.imshow('Depth Map', (depth_map*255/depth_map.max()).astype('uint8'))
-    cv2.imshow('Top View', cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR))
+    cv2.imshow('Top View', result)
     cv2.waitKey(0)
