@@ -25,8 +25,7 @@ class ThreadableOdometrySender(Threadable):
                 # self.table_position.putNumber('Confidence', new_position[3])
                 # self.table_position.putNumber('Timestamp', new_position[4])
                 # self.table_position.putString('Tracking Status', new_position[5])
-
-            self.odometry_queue.task_done()# TODO cannot just call here, have to it on every get
+                self.odometry_queue.task_done()# TODO cannot just call here, have to it on every get
 
         self._release()
 
@@ -52,7 +51,7 @@ class ThreadableCubeSender(Threadable):
         self.enabled = True
 
         while self.enabled:
-            cubes = None
+            cubes = self.cube_queue.get(True)
             while True:
                 try: cubes = self.cube_queue.get_nowait()
                 except Empty: break
@@ -60,8 +59,7 @@ class ThreadableCubeSender(Threadable):
             if cubes is not None:
                 self.table.putNumber('Left', cubes[0])
                 self.table.putNumber('Right', cubes[1])
-
-            self.cube_queue.task_done()
+                self.cube_queue.task_done()
 
         self._release()
 
