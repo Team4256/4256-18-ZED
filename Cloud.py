@@ -34,7 +34,6 @@ class DepthMap(object):
         self.depth_map[self.depth_map == np.NINF] = np.nan
         self.height, self.width = depth_map.shape[:2]
         self.min, self.max = np.nanmin(self.depth_map), np.nanmax(self.depth_map)
-        self.depth_map[np.isnan(self.depth_map)] = 0
 
     def enable_bird(self, resolution, camera_properties, save_config = False, load_config = False):
         if load_config:
@@ -55,12 +54,12 @@ class DepthMap(object):
                 np.save('DepthMap.config_res{}.npy'.format(resolution), self.config)
 
     def bird_independent(self, resolution):
-        section_size = (self.max - self.min)/float(resolution)# could use .ptp() instead of .max() - .min()
-        sections = np.zeros((self.height, self.width, resolution), dtype = 'uint32')
-        for i in range(resolution):
-            indices = np.logical_and((self.depth_map >= i*section_size), (self.depth_map < (i + 1)*section_size))
-            sections[indices, i] = 1
-        return sections.sum(axis = 0).transpose()
+        scale = (self.max - self.min) / resolution
+        new_depth_map = np.clip(np.floor((self.depth_map - self.min) / scale), None, resolution - 1)
+        new_depth_map[np.isnan(new_depth_map)] = resolution
+        transposed_depth_map = np.transpose(new_depth_map.astype(int))
+        bin_map = np.apply_along_axis(lambda x : np.bincount(x, minlength=resolution+1), 1, transposed_depth_map)
+        return np.transpose(bin_map[:,:-1])
 
     def bird_height_aware(self):
         resolution = self.config['resolution']
@@ -87,7 +86,7 @@ if __name__ == '__main__':
     smart_depth_map.enable_bird(20, CameraProperties(2.0))
     #{Do the conversion}
     start_time = time.time()
-    top_view = smart_depth_map.bird_height_aware()#top_view = smart_depth_map.bird_independent(10)
+    top_view = smart_depth_map.bird_independent(10)
     conversion_time = time.time() - start_time
     print('The conversion took {} seconds'.format(conversion_time))
     #{Remove nans and rescale}
