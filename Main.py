@@ -21,7 +21,7 @@ if __name__ == '__main__':
     from Servers import Web, NT
 
     #{declare queues}
-    #queue_cameraZED = Queue()
+    queue_cameraZED = Queue()
     queue_odometry = Queue()
     queue_stitched = Queue()
 

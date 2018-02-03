@@ -77,7 +77,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 class ThreadableMJPGSender(object):
     def __init__(self, stitched_queue, robot_data):
-        self.server = ThreadedHTTPServer(('10.42.56.112', 5801), ImageHandler)
+        self.server = ThreadedHTTPServer(('10.42.56.11', 5803), ImageHandler)
         ImageHandler.stitched_queue = stitched_queue
         ImageHandler.robot_data = robot_data
 
