@@ -88,7 +88,7 @@ if __name__ == '__main__':
     #{Do the conversion}
 
     start_time = time.time()
-    top_view = smart_depth_map.bird_independent(20)
+    top_view = smart_depth_map.bird_independent(10)
     #top_view = smart_depth_map.bird_height_aware()
     conversion_time = time.time() - start_time
     print('The conversion took {} seconds'.format(conversion_time))
