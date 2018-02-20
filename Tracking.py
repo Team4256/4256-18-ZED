@@ -21,8 +21,8 @@ def stream_position(to):
             zed.grab()
             new_position = zed.position()
             if new_position is not None:
-                positionBin.putNumber('X', round(new_position[0], 3))
-                positionBin.putNumber('Y', round(new_position[1], 3))
+                positionBin.putNumber('X', -round(new_position[0], 3))
+                positionBin.putNumber('Y', -round(new_position[1], 3))
                 positionBin.putNumber('Z', round(new_position[2], 3))
 
                 #positionBin.putNumber('Timestamp', zed.pose.timestamp/1e13)
@@ -44,13 +44,20 @@ def stream_position(to):
             to.putString('Overall Status', zed.overall_status)
 
         except KeyboardInterrupt:
+            positionBin.clearPersistent('X')
+            positionBin.clearPersistent('Y')
+            positionBin.clearPersistent('Z')
+            positionBin.clearPersistent('Tracking Status')
+            to.clearPersistent('Overall Status')
+            to.deleteAllEntries()
             zed.camera.close()
             break
 
 if __name__ == '__main__':
-    rioURL = '192.168.0.189'#'10.42.56.2'
+    rioURL = '10.42.56.2'
     NetworkTables.initialize(server = rioURL)
     #NetworkTables.startClientTeam(4256, port = 1735)
+    NetworkTables.setNetworkIdentity('TX2')
     NetworkTables.setUpdateRate(.020)
     stream_position(to = NetworkTables.getTable('ZED'))
     NetworkTables.stopClient()

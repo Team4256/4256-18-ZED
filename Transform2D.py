@@ -85,5 +85,5 @@ class CameraProperties(object):
         return min(CameraProperties.functional_limit - self.cameraTilt + self.fov_vert/2.0, self.fov_vert)
 
 
-ELPFisheye = CameraProperties(40.0, 170.0, 170.0, 54.7)#TODO get accurate first parameter, which is height
-ZED = CameraProperties(20.0, 54.0, 96.0, 90.0)#TODO get accurate first parameter, which is height
+ELPFisheye = CameraProperties(40.0, 71.0, 140.0, 62.5)#TODO get accurate first parameter, which is height
+ZED = CameraProperties(22.4, 54.0, 96.0, 90.0)#TODO get accurate first parameter, which is height

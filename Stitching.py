@@ -38,12 +38,12 @@ def rotate(image, angle, scale = 1.0):
     # col_placement = floor((frame_width - rotated_rect_width)/2.0)
     # rotated_rect = dst[row_placement:-row_placement, col_placement:-col_placement]
 
-camera_port = 1
+camera_port = 2
 
 # film = cv2.VideoCapture(camera_port)
 
 while True:#film.isOpened():
-    # film.read()[1]
+    # view_left = film.read()[1]
     view_right = cv2.pyrDown(cv2.imread("Test A.jpg"))
     view_left = cv2.pyrDown(cv2.imread("Test B.jpg"))
     view_aft = cv2.imread("Test C.jpg")
@@ -59,7 +59,7 @@ while True:#film.isOpened():
     rotated_left = rotate(bird_left, -theta)
     rotated_aft = rotate(bird_aft, 180)
 
-    pinchAmount = 425;
+    pinchAmount = 400;
 
     total_height = rotated_right.shape[0]
     total_width = rotated_right.shape[1] + rotated_left.shape[1] - pinchAmount
