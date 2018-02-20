@@ -24,8 +24,9 @@ def stream_position(to):
                 positionBin.putNumber('X', -round(new_position[0], 3))
                 positionBin.putNumber('Y', -round(new_position[1], 3))
                 positionBin.putNumber('Z', round(new_position[2], 3))
+                positionBin.putNumber('Confidence', zed.pose.pose_confidence)
 
-                #positionBin.putNumber('Timestamp', zed.pose.timestamp/1e13)
+                positionBin.putNumber('Timestamp', zed.pose.timestamp/1e13)
                 positionBin.putString('Tracking Status', zed.tracking_status)
 
             new_rgb = cv2.pyrDown(zed.numpy_rgb())
@@ -47,6 +48,8 @@ def stream_position(to):
             positionBin.clearPersistent('X')
             positionBin.clearPersistent('Y')
             positionBin.clearPersistent('Z')
+            positionBin.clearPersistent('Confidence')
+            positionBin.clearPersistent('Timestamp')
             positionBin.clearPersistent('Tracking Status')
             to.clearPersistent('Overall Status')
             to.deleteAllEntries()
@@ -56,7 +59,6 @@ def stream_position(to):
 if __name__ == '__main__':
     rioURL = '10.42.56.2'
     NetworkTables.initialize(server = rioURL)
-    #NetworkTables.startClientTeam(4256, port = 1735)
     NetworkTables.setNetworkIdentity('TX2')
     NetworkTables.setUpdateRate(.020)
     stream_position(to = NetworkTables.getTable('ZED'))

@@ -1,6 +1,4 @@
-from math import acos
-from math import radians as to_rads
-from math import degrees as to_degrees
+from math import acos, radians, degrees
 def lowest_angle_for(depth, camera_properties, radians = False):# depth and height must be in same units
     '''Imagine that the camera lies at the center of a circle with radius depth.
     That circle intersects the ground at some point, P. This function returns the
@@ -8,22 +6,21 @@ def lowest_angle_for(depth, camera_properties, radians = False):# depth and heig
     plumb_to_vFOVboundary = camera_properties.get_lens_to_ground_angle() - camera_properties.get_vertical_fov()/2.0
     if plumb_to_vFOVboundary < 90:
         big_angle = acos(camera_properties.height/float(depth))#TODO make sure acos is given values between -1 and 1
-        lowest_angle = to_degrees(big_angle) - plumb_to_vFOVboundary
-        return to_rads(lowest_angle) if radians else lowest_angle
+        lowest_angle = degrees(big_angle) - plumb_to_vFOVboundary
+        return radians(lowest_angle) if radians else lowest_angle
     else:
         return 0.0
 
 
-from math import radians as to_rads
 class CameraProperties(object):
     def __init__(self, height, lens_to_ground_angle = 90.0, vertical_fov = 90.0):
         self.height = float(height)
         self.lens_to_ground_angle = float(lens_to_ground_angle)
         self.vertical_fov = float(vertical_fov)
     def get_lens_to_ground_angle(self, radians = False):
-        return to_rads(self.lens_to_ground_angle) if radians else self.lens_to_ground_angle
+        return radians(self.lens_to_ground_angle) if radians else self.lens_to_ground_angle
     def get_vertical_fov(self, radians = False):
-        return to_rads(self.vertical_fov) if radians else self.vertical_fov
+        return radians(self.vertical_fov) if radians else self.vertical_fov
 
 import numpy as np
 from math import ceil
@@ -80,30 +77,25 @@ if __name__ == '__main__':
     import cv2
     import time
     #{Prepare depth map from file}
-    depth_map = np.load('sample depth map.npy')# get grayscale depth map
-    depth_map = cv2.pyrDown(cv2.pyrDown(depth_map))# shrink to speed up computations
+    depth_map = cv2.imread("Map.jpg", 0).astype('float32')#np.load('sample depth map.npy')# get grayscale depth map
     #{Prepare for conversion}
     smart_depth_map = DepthMap(depth_map)
     smart_depth_map.enable_bird(20, CameraProperties(2.0))
-    #{Do the conversion}
 
+    #{Do the conversion}
     start_time = time.time()
-    top_view = smart_depth_map.bird_independent(10)
-    #top_view = smart_depth_map.bird_height_aware()
+    # top_view = smart_depth_map.bird_independent(10)
+    top_view = smart_depth_map.bird_height_aware()
     conversion_time = time.time() - start_time
     print('The conversion took {} seconds'.format(conversion_time))
-    #{Remove nans and rescale}
-    top_view[np.isnan(top_view)] = smart_depth_map.min
-    #top_view -= smart_depth_map.min
-    #top_view *= int(255/top_view.max())# scales to make new max() 255
 
+    #{Prepare vars and resize}
+    desired_height = 200
+    result = cv2.resize(top_view.astype('uint8'), (depth_map.shape[1], desired_height), interpolation = cv2.INTER_LINEAR)# stretch the height
+
+    #{Display}
     depth_map[~np.isfinite(depth_map)] = smart_depth_map.min
     depth_map -= smart_depth_map.min
-    #{Prepare vars for resizing}
-    result_width = depth_map.shape[1]
-    result_height = 200
-    #{Display}
-    result = cv2.resize(top_view.astype('uint8'), (result_width, result_height), interpolation = cv2.INTER_LINEAR)# stretch the height
     cv2.imshow('Depth Map', (depth_map*255/depth_map.max()).astype('uint8'))
     cv2.imshow('Top View', result)
     cv2.waitKey(0)
