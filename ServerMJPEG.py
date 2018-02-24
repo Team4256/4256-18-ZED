@@ -12,6 +12,8 @@ import cv2
 from PIL import Image as convertToJPG
 
 class ImageHandler(BaseHTTPRequestHandler):
+    def __init__(self, app):
+        self.app = app
     def do_GET(self):
         import Main
         if self.path.endswith(".mjpg"):
@@ -20,7 +22,7 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.end_headers()
             while True:
                 try:
-                    image = Main.createSurroundView()
+                    image = self.app.createSurroundView()
                     if not image[0]:
                         continue
                     image_rgb = cv2.cvtColor(image[1], cv2.COLOR_BGR2RGB)
