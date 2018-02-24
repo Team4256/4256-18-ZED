@@ -9,14 +9,19 @@ class ZED(object):
         camera.enable_rgb()
 
     def run(self):
-        self.camera.grab()
-        new_position = self.camera.position()
-        if new_position is not None:
-            self.odometry_queue.put_nowait(new_position)
+        while True:
+            self.camera.grab()
+            new_position = self.camera.position()
+            if new_position is not None:
+                new_position.append(self.camera.pose.pose_confidence)
+                new_position.append(self.camera.pose.timestamp/1e13)
+                new_position.append(self.camera.tracking_status)
 
-        new_rgb = cv2.pyrDown(zed.numpy_rgb())# experiment
-        if new_rgb is not None:
-            self.image_queue.put_nowait(new_rgb)
+                self.odometry_queue.put_nowait(new_position)
+
+            new_rgb = cv2.pyrDown(zed.numpy_rgb())# experiment
+            if new_rgb is not None:
+                self.image_queue.put_nowait(new_rgb)
 
     def release(self):
         self.camera.camera.close()

@@ -24,8 +24,8 @@ if __name__ == '__main__':
     from CustomThread import CustomThread
     from Stitching import Stitching
     stitching_thread = CustomThread(Stitching(camera_queue_L, camera_queue_R, zed_queue_image, stitching_queue))
-    
-    from CameraThreads import OpenCV.USB, OpenCV.USB, ZED.ZED
+
+    from CameraThreads import OpenCV.USB, ZED.ZED
     camera_thread_L = CustomThread(USB(portL, camera_queue_L))
     camera_thread_R = CustomThread(USB(portR, camera_queue_R))
     camera_thread_ZED = CustomThread(ZED(zed_image_queue, zed_odometry_queue))
@@ -50,3 +50,5 @@ if __name__ == '__main__':
         networktables_thread.start()
     except KeyboardInterrupt:
         mjpeg_thread.socket.close()
+        #TODO release cameras
+        NetworkTables.stopClient()

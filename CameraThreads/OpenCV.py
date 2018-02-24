@@ -6,9 +6,10 @@ class USB(object):
         self.destination_queue = destination_queue
 
     def run(self):
-        frame = self.film.read()
-        if frame[0]:
-            self.destination_queue.put_nowait(frame[1])
+        while True:
+            frame = self.film.read()
+            if frame[0]:
+                self.destination_queue.put_nowait(frame[1])
 
     def release(self):
         self.film.release()
