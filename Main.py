@@ -24,13 +24,22 @@ if __name__ == '__main__':
     from CustomThread import CustomThread
     from Stitching import Stitching
     stitching_thread = CustomThread(Stitching(camera_queue_L, camera_queue_R, zed_queue_image, stitching_queue))
-    from CameraThreads import Left.Left, Right.Right, ZED.ZED
-    camera_thread_L = CustomThread(Left(camera_queue_L))
-    camera_thread_R = CustomThread(Right(camera_queue_R))
+    
+    from CameraThreads import OpenCV.USB, OpenCV.USB, ZED.ZED
+    camera_thread_L = CustomThread(USB(portL, camera_queue_L))
+    camera_thread_R = CustomThread(USB(portR, camera_queue_R))
     camera_thread_ZED = CustomThread(ZED(zed_image_queue, zed_odometry_queue))
+
     from Servers import MJPEG, NetworkTables.NetworkTables
     mjpeg_thread = MJPEG.ThreadedHTTPServer(('localhost', 8080), MJPEG.ImageHandler())
-    networktables_thread = CustomThread(NetworkTables(zed_odometry_queue))
+
+
+    rioURL = '10.42.56.2'
+    NetworkTables.initialize(server = rioURL)
+    NetworkTables.setNetworkIdentity('TX2')
+    NetworkTables.setUpdateRate(.020)
+    table = NetworkTables.getTable('ZED')
+    networktables_thread = CustomThread(NetworkTables(table, zed_odometry_queue))
 
     try:
         stitching_thread.start()
