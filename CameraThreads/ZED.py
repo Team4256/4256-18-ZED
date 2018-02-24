@@ -1,3 +1,4 @@
+import cv2# only necessary for pyrDown
 from ..ZED import ZED as camera
 class ZED(object):
     def __init__(self, image_queue, odometry_queue):
@@ -16,3 +17,6 @@ class ZED(object):
         new_rgb = cv2.pyrDown(zed.numpy_rgb())# experiment
         if new_rgb is not None:
             self.image_queue.put_nowait(new_rgb)
+
+    def release(self):
+        self.camera.camera.close()
