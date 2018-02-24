@@ -17,11 +17,11 @@ class ZED(object):
                 new_position.append(self.camera.pose.timestamp/1e13)
                 new_position.append(self.camera.tracking_status)
 
-                self.odometry_queue.put_nowait(new_position)
+                self.odometry_queue.put(new_position)
 
             new_rgb = cv2.pyrDown(zed.numpy_rgb())# experiment
             if new_rgb is not None:
-                self.image_queue.put_nowait(new_rgb)
+                self.image_queue.put(new_rgb)
 
     def release(self):
         self.camera.camera.close()

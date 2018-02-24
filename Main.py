@@ -12,13 +12,12 @@ import numpy as np
 # D *= scale
 
 
-
 if __name__ == '__main__':
     camera_queue_L = Queue()
     camera_queue_R = Queue()
     zed_queue_image = Queue()
     zed_queue_odometry = Queue()
-    stitching_queue = Queue()
+    stitching_queue = Queue()# kind of needs to be global
 
 
     from CustomThread import CustomThread

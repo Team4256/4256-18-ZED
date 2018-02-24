@@ -41,16 +41,14 @@ class Stitching(object):
         self.ZEDqueue = ZEDqueue
         self.stitching_queue = stitching_queue
 
+        self.canvas = None
 
-    def createCanvas():
+
+    def createCanvas(self, view_left, view_right, view_zed):
         '''get new frame'''
-        view_left = self.Lqueue.get()#TODO params
-        view_right = self.Rqueue.get()#TODO params
-        view_zed =self.ZEDqueue.get()#TODO params
-
         total_height, total_width = 0, -self.LR_PinchAmount
 
-        if view_left[0]:# a boolean that says whether camera actually returned an image
+        if view_left[0]:# TODO these booleans no longer exist
             if not self.ELPFisheyeL_calib[0]:# a boolean that says whether calibration files exist
                 #TODO Run Undistort script (...gen_calib(imgpath, savepath))
                 self.ELPFisheyeL_calib = Undistort.load_calib(self.ELPFisheyeL_calib_path)
@@ -60,6 +58,9 @@ class Stitching(object):
             final_left = Stitching.rotate(bird_left, self.Ltheta)#TODO scale parameter
             total_height = max(total_height, final_left.shape[0] + self.Ly_Offset)
             total_width += final_left.shape[1]
+
+            ##############
+            self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
 
         if view_right[0]:# a boolean that says whether camera actually returned an image
             if not self.ELPFisheyeR_calib[0]:# a boolean that says whether calibration files exist
@@ -72,16 +73,39 @@ class Stitching(object):
             total_height = max(total_height, final_right.shape[0] + self.Ry_Offset)
             total_width += final_right.shape[1]
 
-        if (total_width > 0):# only really need to check one to ensure both are greater than 0
-            canvas = np.zeros((total_height, total_width, 3), dtype = 'uint8')
-            canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
-            canvas_right = canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
+            ##############
+            canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
             masked = canvas_right == 0
             canvas_right[masked] = final_right[masked]
-            return (True, canvas)
-        else:
-            return (False,)
+
+        return self.canvas
+
+        self.Lqueue.task_done()#TODO these need to be run but hopefully not after return
+        self.Rqueue.task_done()
+        self.ZEDqueue.task_done()
 
 
-    def run():
-        self.stitching_queue.put_nowait(createCanvas())
+    def run(self):
+        #TODO timeout period if cameras arent responding
+        view_left = (True, self.Lqueue.get(True))
+        view_right = (True, self.Rqueue.get(True))
+        view_zed = (True, self.ZEDqueue.get(True))
+        self.canvas = self.createCanvas(view_left, view_right, view_zed)
+        self.stitching_queue.put(self.canvas)
+
+        while True:
+            try:
+                view_left = (True, self.Lqueue.get(True, timeout = .003))# seconds
+            except Queue.Empty:
+                view_left = (False,)
+            try:
+                view_right = (True, self.Rqueue.get(True, timeout = .003))# seconds
+            except Queue.Empty:
+                view_right = (False,)
+            try:
+                view_zed = (True, self.ZEDqueue.get(True, timeout = .003))# seconds
+            except Queue.Empty:
+                view_zed = (False,)
+
+            if view_left[0] or view_right[0] or view_zed[0]:
+                self.stitching_queue.put(self.createCanvas(view_left, view_right, view_zed))

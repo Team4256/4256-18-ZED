@@ -9,7 +9,7 @@ class USB(object):
         while True:
             frame = self.film.read()
             if frame[0]:
-                self.destination_queue.put_nowait(frame[1])
+                self.destination_queue.put(frame[1])
 
     def release(self):
         self.film.release()
