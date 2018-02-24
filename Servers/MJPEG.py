@@ -6,14 +6,13 @@ from socketserver import ThreadingMixIn
 # import StringIO
 from io import StringIO, BytesIO
 import threading
+from queue import Queue
 import time
 #{3RD PARTY}
 import cv2
 from PIL import Image as convertToJPG
 
 class ImageHandler(BaseHTTPRequestHandler):
-    def __init__(self, app):
-        self.app = app
     def do_GET(self):
         import Main
         if self.path.endswith(".mjpg"):
@@ -21,22 +20,21 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "multipart/x-mixed-replace; boundary=--jpgboundary")
             self.end_headers()
             while True:
-                try:
-                    image = self.app.createSurroundView()
-                    if not image[0]:
-                        continue
-                    image_rgb = cv2.cvtColor(image[1], cv2.COLOR_BGR2RGB)
-                    image_jpg = convertToJPG.fromarray(image_rgb)
-                    tempFile = BytesIO()
-                    image_jpg.save(tempFile, "JPEG")
-                    self.wfile.write("--jpgboundary".encode())
-                    self.send_header("Content-type", "image/jpeg")
-                    self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
-                    self.end_headers()
-                    self.wfile.write(tempFile.getvalue())
-                    #image_jpg.save(self.wfile, "JPEG")
-                    time.sleep(0.05)
-                except:# KeyboardInterrupt:TODO doesn't end right
+                image = (True, Main.stitched_image_queue.get(True))
+
+                image_rgb = cv2.cvtColor(image[1], cv2.COLOR_BGR2RGB)
+                image_jpg = convertToJPG.fromarray(image_rgb)
+                tempFile = BytesIO()
+                image_jpg.save(tempFile, "JPEG")
+                self.wfile.write("--jpgboundary".encode())
+                self.send_header("Content-type", "image/jpeg")
+                self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
+                self.end_headers()
+                self.wfile.write(tempFile.getvalue())
+
+                Main.stitched_image_queue.task_done()
+                time.sleep(0.05)
+                except KeyboardInterrupt:#TODO doesn't end right
                     print('done')
                     break
             return

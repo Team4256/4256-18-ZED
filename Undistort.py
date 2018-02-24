@@ -22,6 +22,14 @@ def advanced(K, D, image, balance = 0.0):#TODO doesn't really work for large ima
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(scaled_K, D, np.eye(3), new_K, input_dim, cv2.CV_16SC2)
     return cv2.remap(image, map1, map2, interpolation = cv2.INTER_LINEAR, borderMode = cv2.BORDER_CONSTANT)
 
+def load_calib(at_path):
+    try:
+        K = np.load(at_path + 'K.npy')
+        D = np.load(at_path + 'D.npy')
+        return (True, (K, D))
+    except IOError:
+        return (False,)
+
 
 if __name__ == '__main__':
     #{define constants}
