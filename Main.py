@@ -11,26 +11,26 @@ import numpy as np
 # K[2][2] = 1.0
 # D *= scale
 
-zed_odometry_queue = Queue()
-zed_image_queue = Queue()
-stitched_image_queue = Queue()
-left_image_queue = Queue()
-right_image_queue = Queue()
-
-
 
 
 if __name__ == '__main__':
+    camera_queue_L = Queue()
+    camera_queue_R = Queue()
+    zed_queue_image = Queue()
+    zed_queue_odometry = Queue()
+    stitching_queue = Queue()
+
+
     from CustomThread import CustomThread
     from Stitching import Stitching
-    stitching_thread = CustomThread(Stitching())
+    stitching_thread = CustomThread(Stitching(camera_queue_L, camera_queue_R, zed_queue_image, stitching_queue))
     from CameraThreads import Left.Left, Right.Right, ZED.ZED
-    camera_thread_L = CustomThread(Left())
-    camera_thread_R = CustomThread(Right())
-    camera_thread_ZED = CustomThread(ZED())
+    camera_thread_L = CustomThread(Left(camera_queue_L))
+    camera_thread_R = CustomThread(Right(camera_queue_R))
+    camera_thread_ZED = CustomThread(ZED(zed_image_queue, zed_odometry_queue))
     from Servers import MJPEG, NetworkTables.NetworkTables
     mjpeg_thread = MJPEG.ThreadedHTTPServer(('localhost', 8080), MJPEG.ImageHandler())
-    networktables_thread = CustomThread(NetworkTables())
+    networktables_thread = CustomThread(NetworkTables(zed_odometry_queue))
 
     try:
         stitching_thread.start()

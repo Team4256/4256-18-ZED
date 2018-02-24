@@ -23,7 +23,7 @@ class Stitching(object):
         self, Lcalib_path = 'Resources/ELPFisheyeL/', Rcalib_path = 'Resources/ELPFisheyeR/',
         LR_PinchAmount = 495, Ly_Offset = 0, Ry_Offset = 10,
         Ltheta = -58, Rtheta = 60,
-        queue):
+        Lqueue, Rqueue, ZEDqueue, stitching_queue):
         #{preparing fisheye cameras}
         self.ELPFisheyeL_calib_path = Lcalib_path
         self.ELPFisheyeR_calib_path = Rcalib_path
@@ -36,13 +36,17 @@ class Stitching(object):
         self.Ltheta = Ltheta
         self.Rtheta = Rtheta
 
-        self.queue = queue
+        self.Lqueue = Lqueue
+        self.Rqueue = Rqueue
+        self.ZEDqueue = ZEDqueue
+        self.stitching_queue = stitching_queue
 
 
     def createCanvas():
         '''get new frame'''
-        view_left = Main.left_image_queue.get()#TODO params)#self.ELPFisheyeL_film.read()
-        view_right = Main.right_image_queue.get()#TODO params)#self.ELPFisheyeR_film.read()
+        view_left = self.Lqueue.get()#TODO params
+        view_right = self.Rqueue.get()#TODO params
+        view_zed =self.ZEDqueue.get()#TODO params
 
         total_height, total_width = 0, -self.LR_PinchAmount
 
@@ -80,4 +84,4 @@ class Stitching(object):
 
 
     def run():
-        self.queue.put_nowait(createCanvas())
+        self.stitching_queue.put_nowait(createCanvas())
