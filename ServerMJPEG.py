@@ -20,10 +20,10 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.end_headers()
             while True:
                 try:
-                    ret, image = Main.camera.read()
-                    if not ret:
+                    image = Main.createSurroundView()
+                    if not image[0]:
                         continue
-                    image_rgb = cv2.cvtColor(cv2.pyrDown(image), cv2.COLOR_BGR2RGB)
+                    image_rgb = cv2.cvtColor(image[1], cv2.COLOR_BGR2RGB)
                     image_jpg = convertToJPG.fromarray(image_rgb)
                     tempFile = BytesIO()
                     image_jpg.save(tempFile, "JPEG")
@@ -34,7 +34,8 @@ class ImageHandler(BaseHTTPRequestHandler):
                     self.wfile.write(tempFile.getvalue())
                     #image_jpg.save(self.wfile, "JPEG")
                     time.sleep(0.05)
-                except KeyboardInterrupt:
+                except:# KeyboardInterrupt:TODO doesn't end right
+                    print('done')
                     break
             return
         if self.path.endswith('.html'):

@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 def rotate(image, angle, scale = 1.0):
-    #TODO doc that its from pyimage search rotate bound
+    #https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
     height, width = image.shape[:2]
     cX, cY = (width//2, height//2)
 
