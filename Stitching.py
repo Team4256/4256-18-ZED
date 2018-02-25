@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import Transform2D
 import Undistort
 
 def rotate(image, angle, scale = 1.0):
@@ -20,10 +21,10 @@ def rotate(image, angle, scale = 1.0):
 
 class Stitching(object):
     def __init__(
-        self, Lcalib_path = 'Resources/ELPFisheyeL/', Rcalib_path = 'Resources/ELPFisheyeR/',
+        self, Lqueue, Rqueue, ZEDqueue, stitching_queue,
+        Lcalib_path = 'Resources/ELPFisheyeL/', Rcalib_path = 'Resources/ELPFisheyeR/',
         LR_PinchAmount = 495, Ly_Offset = 0, Ry_Offset = 10,
-        Ltheta = -58, Rtheta = 60,
-        Lqueue, Rqueue, ZEDqueue, stitching_queue):
+        Ltheta = -58, Rtheta = 60):
         #{preparing fisheye cameras}
         self.ELPFisheyeL_calib_path = Lcalib_path
         self.ELPFisheyeR_calib_path = Rcalib_path
@@ -48,35 +49,40 @@ class Stitching(object):
         '''get new frame'''
         total_height, total_width = 0, -self.LR_PinchAmount
 
-        if view_left[0]:# TODO these booleans no longer exist
+        if view_left[0]:
             if not self.ELPFisheyeL_calib[0]:# a boolean that says whether calibration files exist
                 #TODO Run Undistort script (...gen_calib(imgpath, savepath))
                 self.ELPFisheyeL_calib = Undistort.load_calib(self.ELPFisheyeL_calib_path)
             (K, D) = self.ELPFisheyeL_calib[1]
             view_left = Undistort.simple(K, D, view_left[1])
             bird_left = Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
-            final_left = Stitching.rotate(bird_left, self.Ltheta)#TODO scale parameter
+            final_left = rotate(bird_left, self.Ltheta)#TODO scale parameter
             total_height = max(total_height, final_left.shape[0] + self.Ly_Offset)
             total_width += final_left.shape[1]
 
             ##############
-            self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
+            if self.canvas:
+                self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
 
-        if view_right[0]:# a boolean that says whether camera actually returned an image
+        if view_right[0]:
             if not self.ELPFisheyeR_calib[0]:# a boolean that says whether calibration files exist
                 #TODO Run Undistort script (...gen_calib(imgpath, savepath))
                 self.ELPFisheyeR_calib = Undistort.load_calib(self.ELPFisheyeR_calib_path)
             (K, D) = self.ELPFisheyeR_calib[1]
             view_right = Undistort.simple(K, D, view_right[1])
             bird_right = Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
-            final_right = Stitching.rotate(bird_right, self.Rtheta)#TODO scale parameter
+            final_right = rotate(bird_right, self.Rtheta)#TODO scale parameter
             total_height = max(total_height, final_right.shape[0] + self.Ry_Offset)
             total_width += final_right.shape[1]
 
             ##############
-            canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
-            masked = canvas_right == 0
-            canvas_right[masked] = final_right[masked]
+            if self.canvas:
+                canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
+                masked = canvas_right == 0
+                canvas_right[masked] = final_right[masked]
+
+        if not self.canvas:
+            canvas = np.zeros((total_height, total_width, 3), dtype = 'uint8')
 
         return self.canvas
 

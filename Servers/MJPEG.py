@@ -20,19 +20,20 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "multipart/x-mixed-replace; boundary=--jpgboundary")
             self.end_headers()
             while True:
-                image = Main.stitched_image_queue.get(True)#TODO can we access this var
+                try:
+                    image = Main.stitching_queue.get(True)#TODO can we access this var
 
-                image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image_jpg = convertToJPG.fromarray(image_rgb)
-                tempFile = BytesIO()
-                image_jpg.save(tempFile, "JPEG")
-                self.wfile.write("--jpgboundary".encode())
-                self.send_header("Content-type", "image/jpeg")
-                self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
-                self.end_headers()
-                self.wfile.write(tempFile.getvalue())
+                    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    image_jpg = convertToJPG.fromarray(image_rgb)
+                    tempFile = BytesIO()
+                    image_jpg.save(tempFile, "JPEG")
+                    self.wfile.write("--jpgboundary".encode())
+                    self.send_header("Content-type", "image/jpeg")
+                    self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
+                    self.end_headers()
+                    self.wfile.write(tempFile.getvalue())
 
-                Main.stitched_image_queue.task_done()#TODO use this everywhere
+                    Main.stitched_image_queue.task_done()#TODO use this everywhere
                 except KeyboardInterrupt:#TODO doesn't end right
                     print('done')
                     break
