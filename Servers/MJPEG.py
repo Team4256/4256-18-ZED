@@ -11,6 +11,7 @@ import time
 #{3RD PARTY}
 import cv2
 from PIL import Image as convertToJPG
+from queue import Empty
 
 class ImageHandler(BaseHTTPRequestHandler):
     stitching_queue = None
@@ -22,17 +23,25 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.end_headers()
             while True:
                 try:
-                    image = self.stitching_queue.get(True)
-                    if image:
-                        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                        image_jpg = convertToJPG.fromarray(image_rgb)
-                        tempFile = BytesIO()
-                        image_jpg.save(tempFile, "JPEG")
-                        self.wfile.write("--jpgboundary".encode())
-                        self.send_header("Content-type", "image/jpeg")
-                        self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
-                        self.end_headers()
-                        self.wfile.write(tempFile.getvalue())
+                    if self.stitching_queue.empty():
+                        image = self.stitching_queue.get(True)
+                    else:
+                        while True:
+                            try:
+                                image = self.stitching_queue.get_nowait()
+                            except Empty:
+                                break
+
+
+                    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    image_jpg = convertToJPG.fromarray(image_rgb)
+                    tempFile = BytesIO()
+                    image_jpg.save(tempFile, "JPEG")
+                    self.wfile.write("--jpgboundary".encode())
+                    self.send_header("Content-type", "image/jpeg")
+                    self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
+                    self.end_headers()
+                    self.wfile.write(tempFile.getvalue())
 
                     self.stitching_queue.task_done()#TODO use this everywhere
                 except KeyboardInterrupt:#TODO doesn't end right

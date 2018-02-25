@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import Transform2D
 import Undistort
+from queue import Empty
 
 def rotate(image, angle, scale = 1.0):
     #https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
@@ -61,7 +62,7 @@ class Stitching(object):
             total_width += final_left.shape[1]
 
             ##############
-            if self.canvas:
+            if self.canvas is not None:
                 self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
 
         if view_right[0]:
@@ -76,13 +77,13 @@ class Stitching(object):
             total_width += final_right.shape[1]
 
             ##############
-            if self.canvas:
+            if self.canvas is not None:
                 canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
                 masked = canvas_right == 0
                 canvas_right[masked] = final_right[masked]
 
-        if not self.canvas:
-            canvas = np.zeros((total_height, total_width, 3), dtype = 'uint8')
+        if self.canvas is None:
+            self.canvas = np.zeros((total_height, total_width, 3), dtype = 'uint8')
 
         return self.canvas
 
@@ -96,22 +97,28 @@ class Stitching(object):
         view_left = (True, self.Lqueue.get(True))
         view_right = (True, self.Rqueue.get(True))
         view_zed = (True, self.ZEDqueue.get(True))
-        self.canvas = self.createCanvas(view_left, view_right, view_zed)
-        self.stitching_queue.put(self.canvas)
+        self.stitching_queue.put(self.createCanvas(view_left, view_right, view_zed))
 
         while True:
-            try:
-                view_left = (True, self.Lqueue.get(True, timeout = .003))# seconds
-            except Queue.Empty:
-                view_left = (False,)
-            try:
-                view_right = (True, self.Rqueue.get(True, timeout = .003))# seconds
-            except Queue.Empty:
-                view_right = (False,)
-            try:
-                view_zed = (True, self.ZEDqueue.get(True, timeout = .003))# seconds
-            except Queue.Empty:
-                view_zed = (False,)
+            view_left = (False,)
+            view_right = (False,)
+            view_zed = (False,)
+            while True:
+                try:
+                    view_left = (True, self.Lqueue.get_nowait())
+                except Empty:
+                    break
+            while True:
+                try:
+                    view_right = (True, self.Rqueue.get_nowait())
+                except Empty:
+                    break
+            while True:
+                try:
+                    view_zed = (True, self.ZEDqueue.get_nowait())
+                except Empty:
+                    break
+
 
             if view_left[0] or view_right[0] or view_zed[0]:
                 self.stitching_queue.put(self.createCanvas(view_left, view_right, view_zed))

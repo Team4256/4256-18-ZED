@@ -10,7 +10,6 @@ import numpy as np
 # K *= scale
 # K[2][2] = 1.0
 # D *= scale
-global stitching_queue
 
 if __name__ == '__main__':
     camera_queue_L = Queue()
@@ -54,5 +53,6 @@ if __name__ == '__main__':
         networktables_thread.start()
     except KeyboardInterrupt:
         mjpeg_thread.socket.close()
+        mjpeg_thread.shutdown()
         #TODO release cameras
         NetworkTables.stopClient()
