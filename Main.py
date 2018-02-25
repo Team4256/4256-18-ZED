@@ -17,7 +17,6 @@ if __name__ == '__main__':
     camera_queue_R = Queue()
     zed_queue_image = Queue()
     zed_queue_odometry = Queue()
-    global stitching_queue
     stitching_queue = Queue()# kind of needs to be global
 
     portL = 0
@@ -34,6 +33,7 @@ if __name__ == '__main__':
     camera_thread_ZED = CustomThread(ZEDt.ZEDt(zed_queue_image, zed_queue_odometry))
 
     from Servers import MJPEG
+    MJPEG.ImageHandler.stitching_queue = stitching_queue
     mjpeg_thread = MJPEG.ThreadedHTTPServer(('localhost', 8080), MJPEG.ImageHandler)
 
     from networktables import NetworkTables

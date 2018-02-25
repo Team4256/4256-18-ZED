@@ -13,27 +13,28 @@ import cv2
 from PIL import Image as convertToJPG
 
 class ImageHandler(BaseHTTPRequestHandler):
+    stitching_queue = None
+
     def do_GET(self):
-        import Main
         if self.path.endswith(".mjpg"):
             self.send_response(200)
             self.send_header("Content-type", "multipart/x-mixed-replace; boundary=--jpgboundary")
             self.end_headers()
             while True:
                 try:
-                    image = Main.stitching_queue.get(True)#TODO can we access this var
+                    image = self.stitching_queue.get(True)
+                    if image:
+                        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        image_jpg = convertToJPG.fromarray(image_rgb)
+                        tempFile = BytesIO()
+                        image_jpg.save(tempFile, "JPEG")
+                        self.wfile.write("--jpgboundary".encode())
+                        self.send_header("Content-type", "image/jpeg")
+                        self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
+                        self.end_headers()
+                        self.wfile.write(tempFile.getvalue())
 
-                    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    image_jpg = convertToJPG.fromarray(image_rgb)
-                    tempFile = BytesIO()
-                    image_jpg.save(tempFile, "JPEG")
-                    self.wfile.write("--jpgboundary".encode())
-                    self.send_header("Content-type", "image/jpeg")
-                    self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
-                    self.end_headers()
-                    self.wfile.write(tempFile.getvalue())
-
-                    Main.stitched_image_queue.task_done()#TODO use this everywhere
+                    self.stitching_queue.task_done()#TODO use this everywhere
                 except KeyboardInterrupt:#TODO doesn't end right
                     print('done')
                     break
