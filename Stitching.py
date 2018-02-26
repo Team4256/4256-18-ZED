@@ -20,9 +20,10 @@ def rotate(image, angle, scale = 1.0):
     matrix[1, 2] += (height_rotated/2) - cY
     return cv2.warpAffine(image, matrix, (width_rotated, height_rotated))
 
-class Stitching(object):
+
+class ThreadableStitcher(object):
     def __init__(
-        self, Lqueue, Rqueue, ZEDqueue, stitching_queue,
+        self, Lqueue, Rqueue, ZEDqueue, destination_queue,
         Lcalib_path = 'Resources/ELPFisheyeL/', Rcalib_path = 'Resources/ELPFisheyeR/',
         LR_PinchAmount = 495, Ly_Offset = 0, Ry_Offset = 10,
         Ltheta = -58, Rtheta = 60):
@@ -41,9 +42,11 @@ class Stitching(object):
         self.Lqueue = Lqueue
         self.Rqueue = Rqueue
         self.ZEDqueue = ZEDqueue
-        self.stitching_queue = stitching_queue
+        self.destination_queue = destination_queue
 
         self.canvas = None
+
+        self.enabled = False
 
 
     def createCanvas(self, view_left, view_right, view_zed):
@@ -87,38 +90,38 @@ class Stitching(object):
 
         return self.canvas
 
-        self.Lqueue.task_done()#TODO these need to be run but hopefully not after return
-        self.Rqueue.task_done()
-        self.ZEDqueue.task_done()
-
 
     def run(self):
+        self.enabled = True
         #TODO timeout period if cameras arent responding
         view_left = (True, self.Lqueue.get(True))
         view_right = (True, self.Rqueue.get(True))
-        view_zed = (True, self.ZEDqueue.get(True))
-        self.stitching_queue.put(self.createCanvas(view_left, view_right, view_zed))
+        view_zed = (False,)#(True, self.ZEDqueue.get(True))
+        self.destination_queue.put(self.createCanvas(view_left, view_right, view_zed))
 
-        while True:
+        while self.enabled:
             view_left = (False,)
             view_right = (False,)
             view_zed = (False,)
             while True:
                 try:
-                    view_left = (True, self.Lqueue.get_nowait())
+                    view_left = (True, self.Lqueue.get_nowait())# TODO need to run task_done every time we get
                 except Empty:
                     break
             while True:
                 try:
-                    view_right = (True, self.Rqueue.get_nowait())
+                    view_right = (True, self.Rqueue.get_nowait())# TODO need to run task_done every time we get
                 except Empty:
                     break
             while True:
                 try:
-                    view_zed = (True, self.ZEDqueue.get_nowait())
+                    view_zed = (True, self.ZEDqueue.get_nowait())# TODO need to run task_done every time we get
                 except Empty:
                     break
 
 
             if view_left[0] or view_right[0] or view_zed[0]:
-                self.stitching_queue.put(self.createCanvas(view_left, view_right, view_zed))
+                self.destination_queue.put(self.createCanvas(view_left, view_right, view_zed))
+
+    def stop(self):
+        self.enabled = False

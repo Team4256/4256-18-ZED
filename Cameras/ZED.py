@@ -29,8 +29,8 @@ import pyzed.camera as zcam
 import pyzed.defines as sl
 import pyzed.types as tp
 import pyzed.core as core
-#{numpy}
-from numpy import ctypeslib
+#{OpenCV}
+from cv2 import pyrDown as shrink
 
 def default_init_params():
     params = zcam.PyInitParameters()# creates a place to store params
@@ -107,7 +107,7 @@ class ZED(object):
                 # GPU mode doesn't work, width and height of 0 means default
                 # from left camera
             if self.depth_status is not 'Disabled':
-                self.depth_status = self.camera.retrieve_measure(self.depth, sl.PyMEASURE.PyMEASURE_DEPTH)#XYZBGRA)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
+                self.depth_status = self.camera.retrieve_measure(self.depth, sl.PyMEASURE.PyMEASURE_DEPTH)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
                 # GPU mode doesn't work, width and height of 0 means default
                 # from left camera
 
@@ -169,3 +169,40 @@ class ZED(object):
     @depth_status.setter
     def depth_status(self, update):
         self._depth_status = update
+
+
+def ThreadableGrabber(object):
+    def __init__(self, image_queue, odometry_queue):
+        self.image_queue = image_queue
+        self.odometry_queue = odometry_queue
+
+        self.zed = ZED()
+        self.zed.enable_tracking()
+        self.zed.enable_rgb()
+
+        self.enabled = False
+
+    def run(self):
+        self.enabled = True
+
+        while self.enabled:
+            self.zed.grab()
+            new_position = self.zed.position()
+            if new_position is not None:
+                new_position.append(self.camera.pose.pose_confidence)
+                new_position.append(self.camera.pose.timestamp/1e13)
+                new_position.append(self.camera.tracking_status)
+
+                self.odometry_queue.put(new_position)
+
+            new_rgb = zed.numpy_rgb()
+            if new_rgb is not None:
+                self.image_queue.put(shrink(new_rgb))#TODO experiment with image size
+
+        self._release()
+
+    def _release(self):
+        self.zed.camera.close()
+
+    def stop(self):
+        self.enabled = False

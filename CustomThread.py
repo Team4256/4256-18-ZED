@@ -1,8 +1,11 @@
 from threading import Thread
 class CustomThread(Thread):
-    def __init__(self, classWeWantToRun):
+    def __init__(self, classToRun):
         Thread.__init__(self)
-        self.classWeWantToRun = classWeWantToRun
+        self.classToRun = classToRun
 
     def run(self):
-        self.classWeWantToRun.run()
+        self.classToRun.run()
+
+    def stop(self):
+        self.classToRun.stop()
