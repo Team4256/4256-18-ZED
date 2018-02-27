@@ -14,14 +14,14 @@ if __name__ == '__main__':
     NetworkTables.setUpdateRate(.020)
     table = NetworkTables.getTable('ZED')
 
-    portL, portR = (0, 1)
+    portL, portR = (1, 2)
 
     #{THREADING RELATED}
     #{import overarching packages}
     from queue import Queue
     from CustomThread import CustomThread
     #{import task-specific classes}
-    from Cameras import USB#, ZED
+    from Cameras import USB, ZED
     from Stitching import ThreadableStitcher
     from Servers import Web, NT
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     #{declare threads}
     thread_cameraL = CustomThread(USB.ThreadableGrabber(portL, destination_queue = queue_cameraL))
     thread_cameraR = CustomThread(USB.ThreadableGrabber(portR, destination_queue = queue_cameraR))
-    # thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
+    thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
     thread_stitcher = CustomThread(ThreadableStitcher(queue_cameraL, queue_cameraR, queue_cameraZED, destination_queue = queue_stitched))
     thread_mjpeg = CustomThread(Web.ThreadableMJPGSender(queue_stitched))
     thread_nt = CustomThread(NT.ThreadableOdometrySender(table, queue_odometry))
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     #{start threads}
     thread_cameraL.start()
     thread_cameraR.start()
-    # thread_cameraZED.start()
+    thread_cameraZED.start()
     thread_stitcher.start()
     thread_mjpeg.start()
     thread_nt.start()
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         if request == 'e':
             thread_cameraL.stop()
             thread_cameraR.stop()
-            # thread_cameraZED.stop()
+            thread_cameraZED.stop()
             thread_stitcher.stop()
             thread_mjpeg.stop()
             thread_nt.stop()

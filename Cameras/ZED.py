@@ -70,7 +70,13 @@ class ZED(object):
             params.area_file_path = load_area
         self.overall_status = self.camera.enable_tracking(params)
         # enables tracking and updates overall_status at the same time
+        translation = core.PyTranslation()
+        translation.init_vector(-0.708, 0.0, 0.0)
+        transform = core.PyTransform()
+        transform.set_translation(translation)
+
         self.pose = zcam.PyPose()
+        self.pose.init_transform(transform)
         self.tracking_status = 'Enabled'
 
     """save_area should be False or a file path string"""
@@ -171,7 +177,7 @@ class ZED(object):
         self._depth_status = update
 
 
-def ThreadableGrabber(object):
+class ThreadableGrabber(object):
     def __init__(self, image_queue, odometry_queue):
         self.image_queue = image_queue
         self.odometry_queue = odometry_queue
@@ -195,7 +201,7 @@ def ThreadableGrabber(object):
 
                 self.odometry_queue.put(new_position)
 
-            new_rgb = zed.numpy_rgb()
+            new_rgb = self.zed.numpy_rgb()
             if new_rgb is not None:
                 self.image_queue.put(shrink(new_rgb))#TODO experiment with image size
 

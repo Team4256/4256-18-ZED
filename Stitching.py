@@ -81,9 +81,7 @@ class ThreadableStitcher(object):
 
             ##############
             if self.canvas is not None:
-                canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
-                masked = canvas_right == 0
-                canvas_right[masked] = final_right[masked]
+                self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:] = final_right
 
         if self.canvas is None:
             self.canvas = np.zeros((total_height, total_width, 3), dtype = 'uint8')
