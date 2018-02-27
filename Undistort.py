@@ -3,15 +3,18 @@
 
 import cv2
 import numpy as np
-import glob
 
 def simple(K, D, image):
+    '''This function undistorts the image and cuts off the parts that would look weird.'''
     rows, columns = image.shape[:2]
 
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, np.eye(3), K, (columns, rows), cv2.CV_16SC2)
     return cv2.remap(image, map1, map2, interpolation = cv2.INTER_LINEAR, borderMode = cv2.BORDER_CONSTANT)
 
-def advanced(K, D, image, balance = 0.0):#TODO doesn't really work for large images
+
+def advanced(K, D, image, balance = 0.0):
+    '''This function tries to undistort the image without cutting any of it off.
+       Really only works with small images.'''
     input_dim = image.shape[:2]
     output_dim = input_dim
 
@@ -22,16 +25,23 @@ def advanced(K, D, image, balance = 0.0):#TODO doesn't really work for large ima
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(scaled_K, D, np.eye(3), new_K, input_dim, cv2.CV_16SC2)
     return cv2.remap(image, map1, map2, interpolation = cv2.INTER_LINEAR, borderMode = cv2.BORDER_CONSTANT)
 
-def load_calib(at_path):
+
+def load_calib(at_path, image_size_ratio = 1.0):
     try:
-        K = np.load(at_path + 'K.npy')
-        D = np.load(at_path + 'D.npy')
-        return (True, (K, D))
+        K = np.load(at_path + 'K.npy')*image_size_ratio
+        K[2][2] = 1.0
+        D = np.load(at_path + 'D.npy')*image_size_ratio
+        return K, D
     except IOError:
-        return (False,)
+        K, D = create_calib(at_path)
+        K *= image_size_ratio
+        K[2][2] = 1.0
+        D *= image_size_ratio
+        return K, D
 
 
-if __name__ == '__main__':
+def create_calib(from_path):
+    import glob
     #{define constants}
     chessboard_dims = (6, 9)
     # objp represents the actual layout of a chessboard, which never changes
@@ -45,7 +55,7 @@ if __name__ == '__main__':
     image_dims = None
     objpoints = []# 3d point in real world space
     imgpoints = []# 2d points in image plane
-    filenames = glob.glob('images/*.jpg')
+    filenames = glob.glob(from_path + '*.jpg')
 
     #{attempt to find a chessboard in every image}
     for filename in filenames:
@@ -88,3 +98,5 @@ if __name__ == '__main__':
 
     np.save('K', K)
     np.save('D', D)
+
+    return K, D

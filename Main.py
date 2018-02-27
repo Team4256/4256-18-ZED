@@ -33,8 +33,12 @@ if __name__ == '__main__':
     queue_stitched = Queue()
 
     #{declare threads}
-    thread_cameraL = CustomThread(USB.ThreadableGrabber(portL, destination_queue = queue_cameraL))
-    thread_cameraR = CustomThread(USB.ThreadableGrabber(portR, destination_queue = queue_cameraR))
+    thread_cameraL = CustomThread(USB.ThreadableGrabber(portL,
+                                                        destination_queue = queue_cameraL,
+                                                        calibration_path = 'Resources/ELPFisheyeL/'))
+    thread_cameraR = CustomThread(USB.ThreadableGrabber(portR,
+                                                        destination_queue = queue_cameraR,
+                                                        calibration_path = 'Resources/ELPFisheyeR/'))
     thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
     thread_stitcher = CustomThread(ThreadableStitcher(queue_cameraL, queue_cameraR, queue_cameraZED, destination_queue = queue_stitched))
     thread_mjpeg = CustomThread(Web.ThreadableMJPGSender(queue_stitched))
