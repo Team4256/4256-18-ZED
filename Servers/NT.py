@@ -31,7 +31,7 @@ class ThreadableOdometrySender(object):
 
         self._release()
 
-    def _release():
+    def _release(self):
         table_position.clearPersistent('X')
         table_position.clearPersistent('Y')
         table_position.clearPersistent('Z')

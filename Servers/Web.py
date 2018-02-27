@@ -44,7 +44,7 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
             self.wfile.write("<html><head></head><body>".encode())
-            self.wfile.write("<img src='http://127.0.0.1:8080/cam.mjpg'/>".encode())
+            self.wfile.write("<img src='http://10.42.56.112:8080/cam.mjpg'/>".encode())
             self.wfile.write("</body></html>".encode())
 
 
@@ -54,7 +54,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 class ThreadableMJPGSender(object):
     def __init__(self, stitched_queue):
-        self.server = ThreadedHTTPServer(('localhost', 8080), ImageHandler)
+        self.server = ThreadedHTTPServer(('10.42.56.112', 8080), ImageHandler)#TODO constant for ip
         ImageHandler.stitched_queue = stitched_queue
 
     def run(self):
