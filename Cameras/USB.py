@@ -4,7 +4,7 @@ import Undistort
 import Transform2D
 
 def highlight_cubes(image):
-    image = cv2.pyrDown(image)
+    # image = cv2.pyrDown(image)
     image = np.rot90(image, 2)
     v = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:,:,2]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype('float32')
@@ -16,7 +16,7 @@ class ThreadableGrabber(object):
     def __init__(self, port, destination_queue, calibration_path):
         self.destination_queue = destination_queue
         self.film = cv2.VideoCapture(port)
-        self.K, self.D = Undistort.load_calib(calibration_path, image_size_ratio = 0.5)
+        self.K, self.D = Undistort.load_calib(calibration_path, image_size_ratio = 1.0)#0.5)
 
         self.enabled = False
 

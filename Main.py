@@ -1,9 +1,3 @@
-# scale = 1.0# ratio of final image size to source size#TODO implement with pyrDown
-# # K and D are tuned to image size, so must adjust based on scale
-# K *= scale
-# K[2][2] = 1.0
-# D *= scale
-
 if __name__ == '__main__':
     #{NON-THREADING RELATED}
     from networktables import NetworkTables

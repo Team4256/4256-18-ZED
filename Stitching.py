@@ -19,13 +19,13 @@ def rotate(image, angle, scale = 1.0):
     matrix[0, 2] += (width_rotated/2) - cX
     matrix[1, 2] += (height_rotated/2) - cY
     return cv2.warpAffine(image, matrix, (width_rotated, height_rotated))
-    
+
 
 class ThreadableStitcher(object):
     def __init__(
         self, Lqueue, Rqueue, ZEDqueue, destination_queue,
-        LR_PinchAmount = 0, Ly_Offset = 0, Ry_Offset = 10,
-        Ltheta = -58, Rtheta = 60):
+        LR_PinchAmount = 430, Ly_Offset = 0, Ry_Offset = 0,
+        Ltheta = -62, Rtheta = 59):
         #{defining other constants}
         self.LR_PinchAmount = LR_PinchAmount
         self.Ly_Offset = Ly_Offset
@@ -46,9 +46,12 @@ class ThreadableStitcher(object):
     def createCanvas(self, view_left, view_right, view_zed):
         '''get new frame'''
         total_height, total_width = 0, -self.LR_PinchAmount
+        import time
 
         if view_left[0]:
+            start_time = time.time()
             bird_left = Transform2D.getBirdView(view_left[1], Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
+            print(time.time() - start_time)
             final_left = rotate(bird_left, self.Ltheta)#TODO scale parameter
             total_height = max(total_height, final_left.shape[0] + self.Ly_Offset)
             total_width += final_left.shape[1]
