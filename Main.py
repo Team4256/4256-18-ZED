@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     while True:
         request = input('Type e to exit: ')
-        if request == 'e':
+        if 'e' in request:
             thread_cameraL.stop()
             thread_cameraR.stop()
             thread_cameraZED.stop()
