@@ -56,12 +56,15 @@ if __name__ == '__main__':
             thread_mjpeg.stop()
             thread_nt.stop()
 
-            # thread_stitcher.join()
-            # thread_cameraL.join()
-            # thread_cameraR.join()
-            # thread_cameraZED.join()
-            # thread_mjpeg.join()
-            # thread_nt.join()
+            thread_stitcher.join()
+            thread_cameraL.join()
+            thread_cameraR.join()
+            thread_cameraZED.join()
+            thread_mjpeg.join()
+
+            # Wake up thread_nt if it's stuck in a get()
+            queue_odometry.put(None)
+            thread_nt.join()
 
             NetworkTables.stopClient()
             break
