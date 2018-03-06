@@ -71,7 +71,12 @@ class ThreadableStitcher(object):
         self.enabled = True
 
         while self.enabled:
-            view_left = (False,)
+            try:
+                # sync on the left camera, but with a timeout if the camera fails
+                # this prevents a spin-wait, which can be surprisingly expensive
+                view_left = (True, self.Lqueue.get(True, .05))
+            except:
+                view_left = (False,)
             view_right = (False,)
             while not view_left[0]:
                 view_left = self.cameraL.get()
