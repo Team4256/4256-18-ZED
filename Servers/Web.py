@@ -3,7 +3,6 @@ from socketserver import ThreadingMixIn
 from io import BytesIO
 
 import cv2
-from PIL import Image as convertToJPG
 
 from queue import Empty
 
@@ -27,14 +26,12 @@ class ImageHandler(BaseHTTPRequestHandler):
                             break
 
 
-                image_jpg = convertToJPG.fromarray(image)
-                tempFile = BytesIO()
-                image_jpg.save(tempFile, "JPEG")
+                image_jpg = cv2.imencode('.jpeg', image)[1]
                 self.wfile.write("--jpgboundary".encode())
                 self.send_header("Content-type", "image/jpeg")
-                self.send_header("Content-length", str(tempFile.getbuffer().nbytes))
+                self.send_header("Content-length", str(image_jpg.size))
                 self.end_headers()
-                self.wfile.write(tempFile.getvalue())
+                self.wfile.write(image_jpg.tostring())
 
                 self.stitched_queue.task_done()#TODO can't just call here, must call after every get
 
