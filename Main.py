@@ -8,40 +8,33 @@ if __name__ == '__main__':
     NetworkTables.setUpdateRate(.020)
     table = NetworkTables.getTable('ZED')
 
-    portL, portR = (1, 2)
+    portL, portR = (0, 1)
 
     #{THREADING RELATED}
     #{import overarching packages}
     from queue import Queue
     from CustomThread import CustomThread
     #{import task-specific classes}
-    from Cameras import USB, ZED
+    from Cameras import USB#, ZED
     from Stitching import ThreadableStitcher
     from Servers import Web, NT
 
     #{declare queues}
-    queue_cameraL = Queue()
-    queue_cameraR = Queue()
-    queue_cameraZED = Queue()
     queue_odometry = Queue()
     queue_stitched = Queue()
+    queue_cameraZED = Queue()
+
+    cameraL = USB.USB(portL, 'Resources/ELPFisheyeL/')
+    cameraR = USB.USB(portR, 'Resources/ELPFisheyeR/')
 
     #{declare threads}
-    thread_cameraL = CustomThread(USB.ThreadableGrabber(portL,
-                                                        destination_queue = queue_cameraL,
-                                                        calibration_path = 'Resources/ELPFisheyeL/'))
-    thread_cameraR = CustomThread(USB.ThreadableGrabber(portR,
-                                                        destination_queue = queue_cameraR,
-                                                        calibration_path = 'Resources/ELPFisheyeR/'))
-    thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
-    thread_stitcher = CustomThread(ThreadableStitcher(queue_cameraL, queue_cameraR, queue_cameraZED, destination_queue = queue_stitched))
+    # thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
+    thread_stitcher = CustomThread(ThreadableStitcher(cameraL, cameraR, destination_queue = queue_stitched))
     thread_mjpeg = CustomThread(Web.ThreadableMJPGSender(queue_stitched))
     thread_nt = CustomThread(NT.ThreadableOdometrySender(table, queue_odometry))
 
     #{start threads}
-    thread_cameraL.start()
-    thread_cameraR.start()
-    thread_cameraZED.start()
+    # thread_cameraZED.start()
     thread_stitcher.start()
     thread_mjpeg.start()
     thread_nt.start()
@@ -49,19 +42,12 @@ if __name__ == '__main__':
     while True:
         request = input('Type e to exit: ')
         if 'e' in request:
-            thread_cameraL.stop()
-            thread_cameraR.stop()
-            thread_cameraZED.stop()
             thread_stitcher.stop()
             thread_mjpeg.stop()
             thread_nt.stop()
 
             thread_stitcher.join()
-            thread_cameraL.join()
-            thread_cameraR.join()
-            thread_cameraZED.join()
             thread_mjpeg.join()
-
             # Wake up thread_nt if it's stuck in a get()
             queue_odometry.put(None)
             thread_nt.join()

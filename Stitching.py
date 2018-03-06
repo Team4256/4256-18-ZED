@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import Transform2D
 import Undistort
-from queue import Empty
 
 def rotate(image, angle, scale = 1.0):
     #https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
@@ -23,7 +22,7 @@ def rotate(image, angle, scale = 1.0):
 
 class ThreadableStitcher(object):
     def __init__(
-        self, Lqueue, Rqueue, ZEDqueue, destination_queue,
+        self, cameraL, cameraR, destination_queue,
         LR_PinchAmount = 600//4, Ly_Offset = 0//4, Ry_Offset = 0,
         Ltheta = -60, Rtheta = 56):
         #{defining other constants}
@@ -34,9 +33,8 @@ class ThreadableStitcher(object):
         self.Rtheta = Rtheta
         self.LScaleFactor = 1.0
 
-        self.Lqueue = Lqueue
-        self.Rqueue = Rqueue
-        self.ZEDqueue = ZEDqueue
+        self.cameraL = cameraL
+        self.cameraR = cameraR
         self.destination_queue = destination_queue
 
         self.ready = False
@@ -56,7 +54,7 @@ class ThreadableStitcher(object):
         self.canvas = np.zeros((self.total_height, self.total_width), dtype = 'uint8')
         self.ready = True
 
-    def createCanvas(self, view_left, view_right, view_zed):
+    def create_canvas(self, view_left, view_right, view_zed):
         '''get new frame'''
         bird_left = Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
         final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
@@ -71,34 +69,46 @@ class ThreadableStitcher(object):
 
     def run(self):
         self.enabled = True
-        #TODO timeout period if cameras arent responding
-        view_left = self.Lqueue.get(True)
-        view_right = self.Rqueue.get(True)
-        view_zed = None#self.ZEDqueue.get(True)
-        self.get_ready(view_left, view_right, view_zed)
 
         while self.enabled:
-            view_left = self.Lqueue.get(True)
-            view_right = self.Rqueue.get(True)
-            #view_zed = self.ZEDqueue.get(True)
-            while True:
-                try:
-                    view_left = self.Lqueue.get_nowait()
-                except Empty:
-                    break
-            while True:
-                try:
-                    view_right = self.Rqueue.get_nowait()
-                except Empty:
-                    break
-            # while True:
-            #     try:
-            #         view_zed = self.ZEDqueue.get_nowait()
-            #     except Empty:
-            #         break
+            view_left = (False,)
+            view_right = (False,)
+            while not view_left[0]:
+                view_left = self.cameraL.get()
+            while not view_right[0]:
+                view_right = self.cameraR.get()
 
-            self.createCanvas(view_left, view_right, view_zed)
+            if not self.ready:
+                self.get_ready(view_left[1], view_right[1], None)
+            else:
+                self.create_canvas(view_left[1], view_right[1], None)
+
             self.destination_queue.put(cv2.pyrDown(self.canvas))
+
+        # self.get_ready(view_left, view_right, view_zed)
+        #
+        # while self.enabled:
+        #     view_left = self.Lqueue.get(True)
+        #     view_right = self.Rqueue.get(True)
+        #     #view_zed = self.ZEDqueue.get(True)
+        #     while True:
+        #         try:
+        #             view_left = self.Lqueue.get_nowait()
+        #         except Empty:
+        #             break
+        #     while True:
+        #         try:
+        #             view_right = self.Rqueue.get_nowait()
+        #         except Empty:
+        #             break
+        #     # while True:
+        #     #     try:
+        #     #         view_zed = self.ZEDqueue.get_nowait()
+        #     #     except Empty:
+        #     #         break
+        #
+        #     self.createCanvas(view_left, view_right, view_zed)
+            # self.destination_queue.put(cv2.pyrDown(self.canvas))
 
     def stop(self):
         self.enabled = False
