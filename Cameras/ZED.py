@@ -30,7 +30,7 @@ import pyzed.defines as sl
 import pyzed.types as tp
 import pyzed.core as core
 #{OpenCV}
-from cv2 import pyrDown as shrink
+# from cv2 import pyrDown as shrink
 
 def default_init_params():
     params = zcam.PyInitParameters()# creates a place to store params
@@ -184,7 +184,7 @@ class ThreadableGrabber(object):
 
         self.zed = ZED()
         self.zed.enable_tracking()
-        self.zed.enable_rgb()
+        # self.zed.enable_rgb()
 
         self.enabled = False
 
@@ -202,9 +202,9 @@ class ThreadableGrabber(object):
 
                 self.odometry_queue.put(new_position)
 
-            new_rgb = self.zed.numpy_rgb()
-            if new_rgb is not None:
-                self.image_queue.put(shrink(new_rgb))#TODO experiment with image size
+            # new_rgb = self.zed.numpy_rgb()
+            # if new_rgb is not None:
+            #     self.image_queue.put(shrink(new_rgb))#TODO experiment with image size
 
         self._release()
 

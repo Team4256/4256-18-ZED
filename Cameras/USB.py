@@ -4,7 +4,6 @@ import Undistort
 import Transform2D
 
 def highlight_cubes(image):
-    # image = cv2.pyrDown(cv2.pyrDown(image))# taken care of by film.set()
     image = np.rot90(image, 2)
     v = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:,:,2]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype('float32')

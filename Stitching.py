@@ -44,82 +44,61 @@ class ThreadableStitcher(object):
         self.enabled = False
 
     def get_ready(self, view_left, view_right, view_zed):
-        bird_left = Transform2D.getBirdView(view_left[1], Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
+        bird_left = Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
         final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
 
-        bird_right = Transform2D.getBirdView(view_right[1], Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
+        bird_right = Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
         final_right = rotate(bird_right, self.Rtheta)
 
         self.total_height = max(final_left.shape[0] + self.Ly_Offset, final_right.shape[0] + self.Ry_Offset)
         self.total_width = final_left.shape[1] + final_right.shape[1] - self.LR_PinchAmount
 
-        self.canvas = np.zeros((self.total_height, self.total_width), dtype = 'uint16')
+        self.canvas = np.zeros((self.total_height, self.total_width), dtype = 'uint8')
         self.ready = True
 
     def createCanvas(self, view_left, view_right, view_zed):
         '''get new frame'''
-        if view_left[0] and view_right[0]:
-            bird_left = Transform2D.getBirdView(view_left[1], Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
-            final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
+        bird_left = Transform2D.getBirdView(view_left, Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
+        final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
 
-            bird_right = Transform2D.getBirdView(view_right[1], Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
-            final_right = rotate(bird_right, self.Rtheta)
+        bird_right = Transform2D.getBirdView(view_right, Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
+        final_right = rotate(bird_right, self.Rtheta)
 
-            canvas_left = self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]]
-            canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
-
-            canvas_left = final_left
-            zero_map = canvas_right == 0
-            canvas_right[zero_map] = final_right[zero_map]
-        elif view_left[0]:
-            bird_left = Transform2D.getBirdView(view_left[1], Transform2D.ELPFisheyeL)#TODO could be sped up by only doing math in getBirdView() once
-            final_left = rotate(bird_left, self.Ltheta, self.LScaleFactor)
-            canvas_left = self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]]
-
-            useful_map = final_left > 0
-            canvas_left[useful_map] = final_left[useful_map]
-        elif view_right[0]:
-            bird_right = Transform2D.getBirdView(view_right[1], Transform2D.ELPFisheyeR)#TODO could be sped up by only doing math in getBirdView() once
-            final_right = rotate(bird_right, self.Rtheta)
-            canvas_right = self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:]
-
-            useful_map = final_right > 0
-            canvas_right[useful_map] = final_right[useful_map]
-
-        return self.canvas.astype('uint8')
+        self.canvas[self.Ly_Offset:self.Ly_Offset + final_left.shape[0], :final_left.shape[1]] = final_left
+        nonzero_map = final_right != 0
+        self.canvas[self.Ry_Offset:self.Ry_Offset + final_right.shape[0], -final_right.shape[1]:][nonzero_map] = final_right[nonzero_map]
 
 
     def run(self):
         self.enabled = True
         #TODO timeout period if cameras arent responding
-        view_left = (True, self.Lqueue.get(True))
-        view_right = (True, self.Rqueue.get(True))
-        view_zed = (False,)#(True, self.ZEDqueue.get(True))
+        view_left = self.Lqueue.get(True)
+        view_right = self.Rqueue.get(True)
+        view_zed = None#self.ZEDqueue.get(True)
         self.get_ready(view_left, view_right, view_zed)
 
         while self.enabled:
-            view_left = (False,)
-            view_right = (False,)
-            view_zed = (False,)
+            view_left = self.Lqueue.get(True)
+            view_right = self.Rqueue.get(True)
+            #view_zed = self.ZEDqueue.get(True)
             while True:
                 try:
-                    view_left = (True, self.Lqueue.get_nowait())# TODO need to run task_done every time we get
+                    view_left = self.Lqueue.get_nowait()
                 except Empty:
                     break
             while True:
                 try:
-                    view_right = (True, self.Rqueue.get_nowait())# TODO need to run task_done every time we get
+                    view_right = self.Rqueue.get_nowait()
                 except Empty:
                     break
-            while True:
-                try:
-                    view_zed = (True, self.ZEDqueue.get_nowait())# TODO need to run task_done every time we get
-                except Empty:
-                    break
+            # while True:
+            #     try:
+            #         view_zed = self.ZEDqueue.get_nowait()
+            #     except Empty:
+            #         break
 
-
-            if view_left[0] or view_right[0] or view_zed[0]:
-                self.destination_queue.put(self.createCanvas(view_left, view_right, view_zed))
+            self.createCanvas(view_left, view_right, view_zed)
+            self.destination_queue.put(cv2.pyrDown(self.canvas))
 
     def stop(self):
         self.enabled = False
