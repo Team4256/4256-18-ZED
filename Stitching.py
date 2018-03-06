@@ -85,30 +85,6 @@ class ThreadableStitcher(object):
 
             self.destination_queue.put(cv2.pyrDown(self.canvas))
 
-        # self.get_ready(view_left, view_right, view_zed)
-        #
-        # while self.enabled:
-        #     view_left = self.Lqueue.get(True)
-        #     view_right = self.Rqueue.get(True)
-        #     #view_zed = self.ZEDqueue.get(True)
-        #     while True:
-        #         try:
-        #             view_left = self.Lqueue.get_nowait()
-        #         except Empty:
-        #             break
-        #     while True:
-        #         try:
-        #             view_right = self.Rqueue.get_nowait()
-        #         except Empty:
-        #             break
-        #     # while True:
-        #     #     try:
-        #     #         view_zed = self.ZEDqueue.get_nowait()
-        #     #     except Empty:
-        #     #         break
-        #
-        #     self.createCanvas(view_left, view_right, view_zed)
-            # self.destination_queue.put(cv2.pyrDown(self.canvas))
 
     def stop(self):
         self.enabled = False

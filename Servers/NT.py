@@ -12,14 +12,12 @@ class ThreadableOdometrySender(object):
         self.enabled = True
 
         while self.enabled:
-            if self.odometry_queue.empty():
-                new_position = self.odometry_queue.get(True)
-            else:
-                while True:
-                    try:
-                        new_position = self.odometry_queue.get_nowait()
-                    except Empty:
-                        break
+            new_position = self.odometry_queue.get(True)
+            while True:
+                try:
+                    new_position = self.odometry_queue.get_nowait()
+                except Empty:
+                    break
 
             if new_position is not None:
                 self.table_position.putNumber('Y', round(new_position[0], 4))

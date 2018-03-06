@@ -16,14 +16,12 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "multipart/x-mixed-replace; boundary=--jpgboundary")
             self.end_headers()
             while self.enabled:
-                if self.stitched_queue.empty():
-                    image = self.stitched_queue.get(True)
-                else:
-                    while True:
-                        try:
-                            image = self.stitched_queue.get_nowait()
-                        except Empty:
-                            break
+                image = self.stitched_queue.get(True)
+                while True:
+                    try:
+                        image = self.stitched_queue.get_nowait()
+                    except Empty:
+                        break
 
 
                 image_jpg = cv2.imencode('.jpeg', image)[1]
