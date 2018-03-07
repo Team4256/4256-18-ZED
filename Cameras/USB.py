@@ -22,8 +22,8 @@ class USB(object):
         frame = self.film.read()
         if frame[0]:
             highlighted = highlight_cubes(frame[1])
-            #undistorted = Undistort.simple(self.K, self.D, highlighted)# THIS IS THE SLOWEST PART OF THE CODE
-            return (True, highlighted)#undistorted)
+            undistorted = Undistort.simple(self.K, self.D, highlighted)# THIS IS THE SLOWEST PART OF THE CODE
+            return (True, undistorted)
         else:
             return (False,)
 

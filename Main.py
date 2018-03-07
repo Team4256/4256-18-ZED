@@ -53,6 +53,7 @@ if __name__ == '__main__':
             else:
                 if zed_running:
                     thread_cameraZED.stop()
+                    thread_cameraZED.join()
                     zed_running = False
 
             time.sleep(1.0)
