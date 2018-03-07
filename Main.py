@@ -7,6 +7,7 @@ if __name__ == '__main__':
     NetworkTables.setNetworkIdentity('TX2')
     NetworkTables.setUpdateRate(.020)
     table = NetworkTables.getTable('ZED')
+    robot_data = NetworkTables.getTable('Faraday')
 
     portL, portR = (1, 2)
 
@@ -39,8 +40,20 @@ if __name__ == '__main__':
     thread_stitcher.start()
     thread_mjpeg.start()
     thread_nt.start()
+    zed_running = True
 
     while True:
+        #{stopping ZED when it is no longer needed}
+        if robot_data.getBoolean('Enable Odometry', True):
+            if not zed_running:
+                thread_cameraZED.start()
+                zed_running = True
+        else:
+            if zed_running:
+                thread_cameraZED.stop()
+                zed_running = False
+
+        #{ending the program entirely}
         request = input('Type e to exit: ')
         if 'e' in request:
             thread_cameraZED.stop()
@@ -57,4 +70,5 @@ if __name__ == '__main__':
 
             NetworkTables.stopClient()
             break
+
     print('Done')
