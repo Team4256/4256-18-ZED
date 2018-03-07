@@ -42,20 +42,23 @@ if __name__ == '__main__':
     thread_nt.start()
     zed_running = True
 
+    import time
     while True:
-        #{stopping ZED when it is no longer needed}
-        if robot_data.getBoolean('Enable Odometry', True):
-            if not zed_running:
-                thread_cameraZED.start()
-                zed_running = True
-        else:
-            if zed_running:
-                thread_cameraZED.stop()
-                zed_running = False
+        try:
+            #{stopping ZED when it is no longer needed}
+            if robot_data.getBoolean('Enable Odometry', True):
+                if not zed_running:
+                    thread_cameraZED.start()
+                    zed_running = True
+            else:
+                if zed_running:
+                    thread_cameraZED.stop()
+                    zed_running = False
 
-        #{ending the program entirely}
-        request = input('Type e to exit: ')
-        if 'e' in request:
+            time.sleep(1.0)
+
+        except KeyboardInterrupt:
+            #{ending the program entirely}
             thread_cameraZED.stop()
             thread_stitcher.stop()
             thread_mjpeg.stop()
