@@ -55,14 +55,18 @@ if __name__ == '__main__':
 
         except KeyboardInterrupt:
             #{ending the program entirely}
-            thread_cameraZED.stop()
             thread_stitcher.stop()
             thread_mjpeg.stop()
             thread_nt.stop()
 
-            thread_cameraZED.join()
             thread_stitcher.join()
             thread_mjpeg.join()
+
+            if zed_running:
+                thread_cameraZED.stop()
+                thread_cameraZED.join()
+                zed_running = False
+
             # Wake up thread_nt if it's stuck in a get()
             queue_odometry.put(None)
             thread_nt.join()
