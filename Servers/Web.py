@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from io import BytesIO
+from time import sleep
 
 import cv2
 
@@ -9,7 +10,7 @@ from queue import Empty
 class ImageHandler(BaseHTTPRequestHandler):
     stitched_queue = None
     enabled = False
-    rotation = 45
+    rotation = 0
 
     def do_GET(self):
         if self.path.endswith(".mjpg"):
@@ -17,8 +18,6 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "multipart/x-mixed-replace; boundary=--jpgboundary")
             self.end_headers()
             while self.enabled:
-                self.rotation = (self.rotation+1)%360
-                print(self.rotation)
                 image = self.stitched_queue.get(True)
                 while True:
                     try:
@@ -34,15 +33,38 @@ class ImageHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(image_jpg.tostring())
 
-                self.stitched_queue.task_done()#TODO can't just call here, must call after every get
 
         if self.path.endswith('.html'):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            self.wfile.write("<html><head></head><body>".encode())
-            self.wfile.write(("<img style=\"transform:rotate(" + str(self.rotation) + "deg);\" src='http://localhost:5801/cam.mjpg'/>").encode())
-            self.wfile.write("</body></html>".encode())
+            self.wfile.write("""
+                <html>
+                  <head>
+                  </head>
+                  <body>
+                    <img src="/canvas.mjpg" style="position: absolute;margin-left: 25%;top: 25%;" name="image"/>
+                    <script type="text/javascript">
+
+                    var updateSource = new EventSource("/updates.gyro");
+
+                    updateSource.onmessage = function(event) {image.style.transform = "rotate(" + event.data.toString() + "deg)";};
+
+                    </script>
+                  </body>
+                </html>
+                """.encode())
+
+
+        if self.path.endswith('.gyro'):
+            self.send_response(200)
+            self.send_header("Content-type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            while self.enabled:
+                self.rotation = (self.rotation+1)%360
+                self.wfile.write("data: {}\n\n".format(self.rotation).encode())
+                sleep(0.6)
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
@@ -51,7 +73,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 class ThreadableMJPGSender(object):
     def __init__(self, stitched_queue):
-        self.server = ThreadedHTTPServer(('localhost', 5801), ImageHandler)#TODO constant for ip
+        self.server = ThreadedHTTPServer(('10.42.56.112', 5801), ImageHandler)#TODO constant for ip
         ImageHandler.stitched_queue = stitched_queue
 
     def run(self):
