@@ -9,8 +9,10 @@ from queue import Empty
 
 class ImageHandler(BaseHTTPRequestHandler):
     stitched_queue = None
+    robot_data = None
+
     enabled = False
-    rotation = 0
+    # rotation = 0
 
     def do_GET(self):
         if self.path.endswith(".mjpg"):
@@ -62,8 +64,10 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             while self.enabled:
-                self.rotation = (self.rotation+1)%360
-                self.wfile.write("data: {}\n\n".format(self.rotation).encode())
+                # self.rotation = (self.rotation+1)%360
+                # self.wfile.write("data: {}\n\n".format(self.rotation).encode())
+                gyro_angle = self.robot_data.getNumber('Gyro', 0.0)
+                self.wfile.write("data: {}\n\n".format(gyro_angle).encode())
                 sleep(0.6)
 
 
@@ -72,9 +76,10 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 class ThreadableMJPGSender(object):
-    def __init__(self, stitched_queue):
-        self.server = ThreadedHTTPServer(('10.42.56.112', 5801), ImageHandler)#TODO constant for ip
+    def __init__(self, stitched_queue, robot_data):
+        self.server = ThreadedHTTPServer(('10.42.56.112', 5801), ImageHandler)
         ImageHandler.stitched_queue = stitched_queue
+        ImageHandler.robot_data = robot_data
 
     def run(self):
         ImageHandler.enabled = True
