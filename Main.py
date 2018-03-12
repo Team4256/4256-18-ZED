@@ -7,6 +7,7 @@ if __name__ == '__main__':
     NetworkTables.setNetworkIdentity('TX2')
     NetworkTables.setUpdateRate(.020)
     table = NetworkTables.getTable('ZED')
+    robot_data = NetworkTables.getTable('Faraday')
 
     portL, portR = (1, 2)
 
@@ -31,7 +32,7 @@ if __name__ == '__main__':
     #{declare threads}
     thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
     thread_stitcher = CustomThread(ThreadableStitcher(cameraL, cameraR, destination_queue = queue_stitched))
-    thread_mjpeg = CustomThread(Web.ThreadableMJPGSender(queue_stitched))
+    thread_mjpeg = CustomThread(Web.ThreadableMJPGSender(queue_stitched, robot_data))
     thread_nt = CustomThread(NT.ThreadableOdometrySender(table, queue_odometry))
 
     #{start threads}
@@ -41,7 +42,7 @@ if __name__ == '__main__':
     thread_nt.start()
     zed_running = True
 
-    import time
+    from time import sleep
     while True:
         try:
             #{stopping ZED when it is no longer needed}
@@ -51,7 +52,7 @@ if __name__ == '__main__':
                     thread_cameraZED.join()
                     zed_running = False
 
-            time.sleep(1.0)
+            sleep(1.0)
 
         except KeyboardInterrupt:
             #{ending the program entirely}
@@ -74,4 +75,4 @@ if __name__ == '__main__':
             NetworkTables.stopClient()
             break
 
-    print('Done')
+    print('--------program terminated--------')
