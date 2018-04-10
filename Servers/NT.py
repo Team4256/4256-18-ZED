@@ -1,7 +1,8 @@
 from networktables import NetworkTables
 from queue import Empty
 
-class ThreadableOdometrySender(object):
+from CustomThread import Threadable
+class ThreadableOdometrySender(Threadable):
     def __init__(self, table, odometry_queue):
         self.table = table
         self.table_position = self.table.getSubTable('Position')

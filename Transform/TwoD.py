@@ -2,7 +2,7 @@
 #https://nikolasent.github.io/opencv/2017/05/07/Bird's-Eye-View-Transformation.html
 
 
-def getBirdView(image, camera_properties):
+def getBirdView(image, camera_properties):#TODO could be sped up by only doing math once
     rows, columns = image.shape[:2]
     min_angle = 0.0
     max_angle = camera_properties.compute_max_angle()
@@ -29,6 +29,23 @@ def perspective(image, src_quad, dst_quad):
 
     matrix = cv2.getPerspectiveTransform(src_quad, dst_quad)
     return cv2.warpPerspective(image, matrix, (maxWidth, maxHeight))
+
+
+def rotate(image, angle, scale = 1.0):
+    #https://www.pyimagesearch.com/2017/01/02/rotate-images-correctly-with-opencv-and-python/
+    height, width = image.shape[:2]
+    cX, cY = (width//2, height//2)
+
+    matrix = cv2.getRotationMatrix2D((cX, cY), -angle, scale)
+    matrix_cos = np.abs(matrix[0, 0])
+    matrix_sin = np.abs(matrix[0, 1])
+
+    height_rotated = int((height*matrix_cos) + (width*matrix_sin))
+    width_rotated = int((height*matrix_sin) + (width*matrix_cos))
+
+    matrix[0, 2] += (width_rotated/2) - cX
+    matrix[1, 2] += (height_rotated/2) - cY
+    return cv2.warpAffine(image, matrix, (width_rotated, height_rotated))
 
 
 from math import radians, cos
@@ -88,4 +105,4 @@ class CameraProperties(object):
 ELPFisheyeL = CameraProperties(39.0, 65.0, 140.0, 15.0)
 ELPFisheyeR = CameraProperties(39.0, 65.0, 140.0, 15.0)
 
-ZED = CameraProperties(22.4, 54.0, 96.0, 90.0)#TODO get accurate first parameter, which is height
+ZED = CameraProperties(22.4, 96.0, 54.0, 90.0)#TODO get accurate first parameter, which is height

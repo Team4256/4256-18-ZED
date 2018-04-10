@@ -9,3 +9,14 @@ class CustomThread(Thread):
 
     def stop(self):
         self.classToRun.stop()
+
+
+from abc import ABC, abstractmethod
+class Threadable(ABC):
+    @abstractmethod
+    def run(self):
+        pass
+
+    @abstractmethod
+    def stop(self):
+        pass

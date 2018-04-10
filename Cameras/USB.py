@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
-import Undistort
-import Transform2D
+from Transform import Undistort
 
 def highlight_cubes(image):
     image = np.rot90(image, 2)

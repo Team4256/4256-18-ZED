@@ -72,7 +72,8 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
 
 
-class ThreadableMJPGSender(object):
+from CustomThread import Threadable
+class ThreadableMJPGSender(Threadable):
     def __init__(self, stitched_queue, robot_data):
         self.server = ThreadedHTTPServer(('10.42.56.11', 5803), ImageHandler)
         ImageHandler.stitched_queue = stitched_queue

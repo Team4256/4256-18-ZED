@@ -176,8 +176,8 @@ class ZED(object):
     def depth_status(self, update):
         self._depth_status = update
 
-
-class ThreadableGrabber(object):
+from CustomThread import Threadable
+class ThreadableGrabber(Threadable):
     def __init__(self, image_queue, odometry_queue):
         self.image_queue = image_queue
         self.odometry_queue = odometry_queue
