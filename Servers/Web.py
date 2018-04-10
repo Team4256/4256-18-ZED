@@ -63,7 +63,9 @@ class ImageHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-cache")
             self.end_headers()
             while self.enabled:
-                gyro_angle = self.robot_data.getNumber('Gyro', 0.0)
+                # self.rotation = (self.rotation+1)%360
+                # self.wfile.write("data: {}\n\n".format(self.rotation).encode())
+                gyro_angle = 0.0#self.robot_data.getNumber('Gyro', 0.0)
                 self.wfile.write("data: {}\n\n".format(gyro_angle).encode())
                 sleep(0.6)
 
