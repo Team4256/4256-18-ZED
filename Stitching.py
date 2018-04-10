@@ -37,6 +37,19 @@ class ThreadableStitcher(Threadable):
             else:
                 self.create_canvas(view_left[1], view_right[1], None)
 
+            #{following code should probably be in its own thread}
+            thresholded = np.zeros_like(view_left[1])
+            thresholded[view_left[1] <= 20] = 255#TODO tune
+            _, contours, _ = cv2.findContours(thresholded, mode = cv2.RETR_LIST, method = cv2.CHAIN_APPROX_SIMPLE)
+            targetL = thresholded.shape[1]
+            targetR = 0.0
+            for contour in contours:
+                center, size, angle = cv2.minAreaRect(contour)
+                if round(size[0]/size[1], 0) == 1 and size[0]*size[1] > 20:#TODO tune
+                    cv2.circle(view_left[1], center, 6, (102, 102, 255), thickness = -1)
+                    if targetL > center[0]: targetL = center[0]
+                    if targetR < center[0]: targetR = center[0]
+            #---------------------------------------
             self.destination_queue.put(self.canvas)
 
 
