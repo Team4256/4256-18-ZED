@@ -24,6 +24,7 @@ if __name__ == '__main__':
     queue_cameraZED = Queue()
     queue_odometry = Queue()
     queue_stitched = Queue()
+    queue_cubes = Queue()
 
     #{initialize cameras}
     cameraL = USB.USB(portL, 'Resources/ELPFisheyeL/')
@@ -31,15 +32,17 @@ if __name__ == '__main__':
 
     #{declare threads}
     thread_cameraZED = CustomThread(ZED.ThreadableGrabber(queue_cameraZED, queue_odometry))
-    thread_stitcher = CustomThread(ThreadableStitcher(cameraL, cameraR, destination_queue = queue_stitched))
+    thread_stitcher = CustomThread(ThreadableStitcher(cameraL, cameraR, queue_stitched, queue_cubes))
     thread_mjpeg = CustomThread(Web.ThreadableMJPGSender(queue_stitched, robot_data))
-    thread_nt = CustomThread(NT.ThreadableOdometrySender(table, queue_odometry))
+    thread_nt_odometry = CustomThread(NT.ThreadableOdometrySender(table, queue_odometry))
+    thread_nt_cubes = CustomThread(NT.ThreadableCubeSender(table, queue_cubes))
 
     #{start threads}
     thread_cameraZED.start()
     thread_stitcher.start()
     thread_mjpeg.start()
-    thread_nt.start()
+    thread_nt_odometry.start()
+    thread_nt_cubes.start()
     zed_running = True
 
     from time import sleep
@@ -58,8 +61,8 @@ if __name__ == '__main__':
             #{ending the program entirely}
             thread_stitcher.stop()
             thread_mjpeg.stop()
-            thread_nt.stop()
-
+            thread_nt_odometry.stop()
+            thread_nt_cubes.stop()
             thread_stitcher.join()
             thread_mjpeg.join()
 
@@ -68,9 +71,11 @@ if __name__ == '__main__':
                 thread_cameraZED.join()
                 zed_running = False
 
-            # Wake up thread_nt if it's stuck in a get()
+            # Wake up thread_nt's if they're stuck in a get()
             queue_odometry.put(None)
-            thread_nt.join()
+            queue_cubes.put(None)
+            thread_nt_odometry.join()
+            thread_nt_cubes.join()
 
             NetworkTables.stopClient()
             break

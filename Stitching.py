@@ -5,12 +5,13 @@ from Transform import TwoD
 from CustomThread import Threadable
 class ThreadableStitcher(Threadable):
     def __init__(
-        self, cameraL, cameraR, destination_queue,
+        self, cameraL, cameraR, canvas_queue, cube_queue,
         overlapAmount = 0, upperBorderL = 0, upperBorderR = 0, thetaL = 0, thetaR = 0):
 
         self.cameraL = cameraL
         self.cameraR = cameraR
-        self.destination_queue = destination_queue
+        self.canvas_queue = canvas_queue
+        self.cube_queue = cube_queue
 
         self.overlapAmount = overlapAmount
         self.upperBorderL = upperBorderL
@@ -25,33 +26,29 @@ class ThreadableStitcher(Threadable):
         self.enabled = True
 
         while self.enabled:
+            #-------------------------------------------------------------------
             view_left = (False,)
             view_right = (False,)
-            while not view_left[0]:
-                view_left = self.cameraL.get()
-            while not view_right[0]:
-                view_right = self.cameraR.get()
+            while not view_left[0]: view_left = self.cameraL.get()
+            while not view_right[0]: view_right = self.cameraR.get()
 
-            if not self.ready:
-                self.get_ready(view_left[1], view_right[1], None)
-            else:
-                self.create_canvas(view_left[1], view_right[1], None)
+            if not self.ready: self.get_ready(view_left[1], view_right[1], None)
+            else: self.create_canvas(view_left[1], view_right[1], None)
 
-            #{following code should probably be in its own thread}
+            self.canvas_queue.put(self.canvas)
+            #-------------------------------------------------------------------
             thresholded = np.zeros_like(view_left[1])
             thresholded[view_left[1] <= 50] = 255#TODO tune
             _, contours, _ = cv2.findContours(thresholded, mode = cv2.RETR_LIST, method = cv2.CHAIN_APPROX_SIMPLE)
-            targetL = thresholded.shape[1]
-            targetR = 0.0
+            cubeL = thresholded.shape[1]
+            cubeR = 0.0
             for contour in contours:
                 center, size, angle = cv2.minAreaRect(contour)
                 if size[0]*size[1] > 5 and round(size[0]/size[1], 0) == 1:#TODO tune
-                    if targetL > center[0]: targetL = center[0]
-                    if targetR < center[0]: targetR = center[0]
-            print(targetL)
-            #---------------------------------------
-            self.destination_queue.put(self.canvas)
+                    if cubeL > center[0]: cubeL = center[0]
+                    if cubeR < center[0]: cubeR = center[0]
 
+            self.cube_queue.put((cubeL, cubeR))
 
     def stop(self):
         self.enabled = False
