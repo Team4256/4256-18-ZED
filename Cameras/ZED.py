@@ -29,8 +29,17 @@ import pyzed.camera as zcam
 import pyzed.defines as sl
 import pyzed.types as tp
 import pyzed.core as core
-#{OpenCV}
-# from cv2 import pyrDown as shrink
+
+import numpy as np
+def rigid_pose_transform(translation):
+    M = np.identity(4)
+    M[:3,3] = np.asarray(translation)
+    M_inv = np.linalg.inv(M)
+    def transform(data): return np.dot(np.dot(M_inv, data), M)
+    # tp.PyMatrix4f()
+    # M.set_identity()
+    # M[(0,3)], M[(1,3)], M[(2,3)] = translation
+    return transform
 
 def default_init_params():
     params = zcam.PyInitParameters()# creates a place to store params
@@ -59,32 +68,33 @@ class ZED(object):
         self.camera = zcam.PyZEDCamera()
         self.overall_status = self.camera.open(default_init_params())
         # opens camera and updates overall_status at the same time
+        self.runtime_params = zcam.PyRuntimeParameters(sensing_mode = sl.PySENSING_MODE.PySENSING_MODE_STANDARD)
+        # stores runtime params to avoid gradual memory leakage bug
         self.tracking_status = 'Disabled'
         self.rgb_status = 'Disabled'
         self.depth_status = 'Disabled'
 
-    """load_area should be False or a file path string"""
-    def enable_tracking(self, load_area = False):
+    """load_area should be False or a file path string, init_vector should be a tuple of (X, Y, Z)"""
+    def enable_tracking(self, init_vector = (0.0, 0.0, 0.0), load_area = False):
         params = default_tracking_params()
-        if load_area is not False:
-            params.area_file_path = load_area
+        if load_area is not False: params.area_file_path = load_area
         self.overall_status = self.camera.enable_tracking(params)
         # enables tracking and updates overall_status at the same time
         translation = core.PyTranslation()
-        translation.init_vector(0.0, 0.0, 0.0)
+        translation.init_vector(init_vector[0], init_vector[1], init_vector[2])# X, Y, Z
         transform = core.PyTransform()
         transform.set_translation(translation)
-
+        params.set_initial_world_transform(transform)
+        # sets position equal to coordinates in init_vector
+        self.transform = rigid_pose_transform((-init_vector[0], -init_vector[1], -init_vector[2]))
+        # saves function that transforms poses such that they ignore the init_vector
         self.pose = zcam.PyPose()
-        self.pose.init_transform(transform)
         self.tracking_status = 'Enabled'
 
     """save_area should be False or a file path string"""
     def disable_tracking(self, save_area = False):
-        if save_area is not False:
-            self.camera.disable_tracking(save_area)
-        else:
-            self.camera.disable_tracking()
+        if save_area is not False: self.camera.disable_tracking(save_area)
+        else: self.camera.disable_tracking()
         self.tracking_status = 'Disabled'
 
     def enable_rgb(self):
@@ -102,11 +112,12 @@ class ZED(object):
         self.depth_status = 'Disabled'
 
     def grab(self):
-        self.overall_status = self.camera.grab(zcam.PyRuntimeParameters(sensing_mode = sl.PySENSING_MODE.PySENSING_MODE_STANDARD))
+        self.overall_status = self.camera.grab(self.runtime_params)
         # options are STANDARD, FILL
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
             if self.tracking_status is not 'Disabled':
                 self.tracking_status = self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD)
+                self.pose.pose_data = self.transform(self.pose.pose_data)
                 # locates left camera with respect to world
             if self.rgb_status is not 'Disabled':
                 self.rgb_status = self.camera.retrieve_image(self.rgb, sl.PyVIEW.PyVIEW_LEFT)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
@@ -118,28 +129,20 @@ class ZED(object):
                 # from left camera
 
     def position(self):
-        if self._tracking_status == sl.PyTRACKING_STATE.PyTRACKING_STATE_OK:
-            return self.pose.get_translation(core.PyTranslation()).get()
-        else:
-            return None
+        if self._tracking_status == sl.PyTRACKING_STATE.PyTRACKING_STATE_OK: return self.pose.get_translation(core.PyTranslation()).get()
+        else: return None
 
     def orientation(self):
-        if self._tracking_status == sl.PyTRACKING_STATE.PyTRACKING_STATE_OK:
-            return self.pose.get_orientation(core.PyOrientation()).get()
-        else:
-            return None
+        if self._tracking_status == sl.PyTRACKING_STATE.PyTRACKING_STATE_OK: return self.pose.get_orientation(core.PyOrientation()).get()
+        else: return None
 
     def numpy_rgb(self):
-        if self._rgb_status == tp.PyERROR_CODE.PySUCCESS:
-            return self.rgb.get_data()
-        else:
-            return None
+        if self._rgb_status == tp.PyERROR_CODE.PySUCCESS: return self.rgb.get_data()
+        else: return None
 
     def numpy_depth(self):
-        if self._depth_status == tp.PyERROR_CODE.PySUCCESS:
-            return self.depth.get_data()
-        else:
-            return None
+        if self._depth_status == tp.PyERROR_CODE.PySUCCESS: return self.depth.get_data()
+        else: return None
 
 
     @property
@@ -183,7 +186,7 @@ class ThreadableGrabber(Threadable):
         self.odometry_queue = odometry_queue
 
         self.zed = ZED()
-        self.zed.enable_tracking()
+        self.zed.enable_tracking(init_vector = (0.0, 0.425, 0.825))
         # self.zed.enable_rgb()
 
         self.enabled = False
