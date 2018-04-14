@@ -86,7 +86,7 @@ class ZED(object):
         transform.set_translation(translation)
         params.set_initial_world_transform(transform)
         # sets position equal to coordinates in init_vector
-        self.transform = rigid_pose_transform((-init_vector[0], -init_vector[1], -init_vector[2]))
+        # TODO TODO TODO self.transformer = rigid_pose_transform((-init_vector[0], -init_vector[1], -init_vector[2]))
         # saves function that transforms poses such that they ignore the init_vector
         self.pose = zcam.PyPose()
         self.tracking_status = 'Enabled'
@@ -117,7 +117,7 @@ class ZED(object):
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
             if self.tracking_status is not 'Disabled':
                 self.tracking_status = self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD)
-                self.pose.pose_data = self.transform(self.pose.pose_data(core.PyTransform()))#TODO should pose_data get overwritten
+                # TODO TODO TODO self.pose.pose_data = self.transformer(self.pose.pose_data(core.PyTransform()))#TODO should pose_data get overwritten
                 # locates left camera with respect to world
             if self.rgb_status is not 'Disabled':
                 self.rgb_status = self.camera.retrieve_image(self.rgb, sl.PyVIEW.PyVIEW_LEFT)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
@@ -199,9 +199,9 @@ class ThreadableGrabber(Threadable):
             new_position = self.zed.position()
             if new_position is not None:
                 new_position = new_position.tolist()
-                new_position.append(self.zed.pose.pose_confidence)
-                new_position.append(self.zed.pose.timestamp/1e6)
-                new_position.append(self.zed.tracking_status)
+                # new_position.append(self.zed.pose.pose_confidence)
+                # new_position.append(self.zed.pose.timestamp/1e6)
+                # new_position.append(self.zed.tracking_status)
 
                 self.odometry_queue.put(new_position)
 
