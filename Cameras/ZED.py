@@ -35,7 +35,7 @@ def rigid_pose_transform(translation):
     M = np.identity(4)
     M[:3,3] = np.asarray(translation)
     M_inv = np.linalg.inv(M)
-    def transform(data): return np.dot(np.dot(M_inv, data), M)
+    def transform(data): return np.dot(np.dot(M_inv, data), M)#TODO would matmul be better?
     # tp.PyMatrix4f()
     # M.set_identity()
     # M[(0,3)], M[(1,3)], M[(2,3)] = translation
@@ -117,7 +117,7 @@ class ZED(object):
         if self._overall_status == tp.PyERROR_CODE.PySUCCESS:
             if self.tracking_status is not 'Disabled':
                 self.tracking_status = self.camera.get_position(self.pose, sl.PyREFERENCE_FRAME.PyREFERENCE_FRAME_WORLD)
-                self.pose.pose_data = self.transform(self.pose.pose_data)
+                self.pose.pose_data = self.transform(self.pose.pose_data(core.PyTransform()))#TODO should pose_data get overwritten
                 # locates left camera with respect to world
             if self.rgb_status is not 'Disabled':
                 self.rgb_status = self.camera.retrieve_image(self.rgb, sl.PyVIEW.PyVIEW_LEFT)#, core.PyMEM.PyMEM_CPU, width = 0, height = 0)
