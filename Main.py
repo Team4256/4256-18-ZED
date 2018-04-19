@@ -17,7 +17,7 @@ if __name__ == '__main__':
         if found and frame.shape[1]//frame.shape[0] is 1:
             if not portL: portL = port
             else: portR = port
-    print((portL, portR))
+    print('Found ports: ' + str((portL, portR)))
 
     #{THREADING RELATED}
     #{import overarching packages}
