@@ -9,7 +9,15 @@ if __name__ == '__main__':
     table = NetworkTables.getTable('ZED')
     robot_data = NetworkTables.getTable('Faraday')
 
-    portL, portR = (1, 2)
+    from cv2 import VideoCapture
+    portL, portR = (False, False)
+    for port in range(8):
+        cam = VideoCapture(port)
+        found, frame = cam.read()
+        if found and frame.shape[1]//frame.shape[0] is 1:
+            if not portL: portL = port
+            else: portR = port
+    print((portL, portR))
 
     #{THREADING RELATED}
     #{import overarching packages}

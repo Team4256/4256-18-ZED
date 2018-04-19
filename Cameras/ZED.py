@@ -186,7 +186,7 @@ class ThreadableGrabber(Threadable):
         self.odometry_queue = odometry_queue
 
         self.zed = ZED()
-        self.zed.enable_tracking(init_vector = (0.0, 0.425, 0.825))
+        self.zed.enable_tracking()#init_vector = (0.0, 0.425, 0.825))
         # self.zed.enable_rgb()
 
         self.enabled = False
